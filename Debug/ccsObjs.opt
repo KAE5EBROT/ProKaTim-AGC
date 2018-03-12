@@ -1,0 +1,1 @@
+-l"./ProKaTimSS2018cfg.cmd" "./ProKaTimSS2018cfg.obj" "./ProKaTimSS2018cfg_c.obj" "./config_AIC23.obj" "./skeleton.obj" -l"libc.a" -ldsk6713bsl.lib -lcsl6713.lib 
