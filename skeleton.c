@@ -5,7 +5,7 @@
 *  The file contains mistakes and omissions, which shall be
 *  corrected and completed by the students.
 *
-*   F. Quint, HsKA
+*   F. Quint, HsKA //test
 ************************************************************/
 
 #include <csl.h>
@@ -32,7 +32,7 @@ void config_interrupts(void);
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
 		/* McBSP Control Register */
-        MCBSP_FMKS(SPCR, FREE, NO)              |	// Freilauf
+        MCBSP_FMKS(SPCR, FREE, NO)              |	// Freilauf 
         MCBSP_FMKS(SPCR, SOFT, YES)          	|	// p Clock stoppt nicht beim debuggen, aber ist glaub egal, weil wir den Clock nicht vorgeben
         MCBSP_FMKS(SPCR, FRST, YES)             |	// Framesync ist ein
         MCBSP_FMKS(SPCR, GRST, YES)             |	// Reset aus, damit läuft der Samplerate- Generator
