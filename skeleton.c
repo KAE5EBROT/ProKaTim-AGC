@@ -31,46 +31,47 @@ short Buffer_out_ping[BUFFER_LEN];
 short Buffer_out_pong[BUFFER_LEN];
 void config_interrupts(void);
 
+
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
 		/* McBSP Control Register */
         MCBSP_FMKS(SPCR, FREE, NO)              |	// Freilauf 
         MCBSP_FMKS(SPCR, SOFT, YES)          	|	// p Clock stoppt nicht beim debuggen, aber ist glaub egal, weil wir den Clock nicht vorgeben
         MCBSP_FMKS(SPCR, FRST, YES)             |	// Framesync ist ein
-        MCBSP_FMKS(SPCR, GRST, YES)             |	// Reset aus, damit läuft der Samplerate- Generator
-        MCBSP_FMKS(SPCR, XINTM, XRDY)           |	// p Sender Interrupt wird durch "XRDY-Bit" ausgelöst. Interrupt können wir vielleicht für EDMA nutzen.
-        MCBSP_FMKS(SPCR, XSYNCERR, NO)          |	// empfängerseitig keine Überwachung der Synchronisation
-        MCBSP_FMKS(SPCR, XRST, YES)             |	// Sender läuft (kein Reset- Status)	
+        MCBSP_FMKS(SPCR, GRST, YES)             |	// Reset aus, damit lï¿½uft der Samplerate- Generator
+        MCBSP_FMKS(SPCR, XINTM, XRDY)           |	// p Sender Interrupt wird durch "XRDY-Bit" ausgelï¿½st. Interrupt kï¿½nnen wir vielleicht fï¿½r EDMA nutzen.
+        MCBSP_FMKS(SPCR, XSYNCERR, NO)          |	// empfï¿½ngerseitig keine ï¿½berwachung der Synchronisation
+        MCBSP_FMKS(SPCR, XRST, YES)             |	// Sender lï¿½uft (kein Reset- Status)	
         MCBSP_FMKS(SPCR, DLB, OFF)              |	// Loopback (Kurschluss) nicht aktiv
-        MCBSP_FMKS(SPCR, RJUST, RZF)            |	// rechtsbündige Ausrichtung der Daten im Puffer
-        MCBSP_FMKS(SPCR, CLKSTP, DISABLE)       |	// Clock startet ohne Verzögerung auf fallenden Flanke (siehe auch PCR-Register)
+        MCBSP_FMKS(SPCR, RJUST, RZF)            |	// rechtsbï¿½ndige Ausrichtung der Daten im Puffer
+        MCBSP_FMKS(SPCR, CLKSTP, DISABLE)       |	// Clock startet ohne Verzï¿½gerung auf fallenden Flanke (siehe auch PCR-Register)
         MCBSP_FMKS(SPCR, DXENA, OFF)            |	// DX- Enabler wird nicht verwendet
-        MCBSP_FMKS(SPCR, RINTM, RRDY)           |	// Sender Interrupt wird durch "RRDY-Bit" ausgelöst
-        MCBSP_FMKS(SPCR, RSYNCERR, NO)          |	// senderseitig keine Überwachung der Synchronisation
-        MCBSP_FMKS(SPCR, RRST, YES),			// Empfänger läuft (kein Reset- Status)
+        MCBSP_FMKS(SPCR, RINTM, RRDY)           |	// Sender Interrupt wird durch "RRDY-Bit" ausgelï¿½st
+        MCBSP_FMKS(SPCR, RSYNCERR, NO)          |	// senderseitig keine ï¿½berwachung der Synchronisation
+        MCBSP_FMKS(SPCR, RRST, YES),			// Empfï¿½nger lï¿½uft (kein Reset- Status)
 		/* Empfangs-Control Register */
         MCBSP_FMKS(RCR, RPHASE, SINGLE)         |	// Nur eine Phase pro Frame
-        MCBSP_FMKS(RCR, RFRLEN2, DEFAULT)       |	// Länge in Phase 2, unrelevant
-        MCBSP_FMKS(RCR, RWDLEN2, DEFAULT)       |	// Wortlänge in Phase 2, unrelevant
+        MCBSP_FMKS(RCR, RFRLEN2, DEFAULT)       |	// Lï¿½nge in Phase 2, unrelevant
+        MCBSP_FMKS(RCR, RWDLEN2, DEFAULT)       |	// Wortlï¿½nge in Phase 2, unrelevant
         MCBSP_FMKS(RCR, RCOMPAND, MSB)          |	// kein Compandierung der Daten (MSB first)
-        MCBSP_FMKS(RCR, RFIG, NO)               |	// Rahmensynchronisationspulse (nach dem ersten Puls)) startet die Übertragung neu
-        MCBSP_FMKS(RCR, RDATDLY, 0BIT)          |	// keine Verzögerung (delay) der Daten
-        MCBSP_FMKS(RCR, RFRLEN1, OF(1))         |	// Länge der Phase 1 --> 1 Wort
+        MCBSP_FMKS(RCR, RFIG, NO)               |	// Rahmensynchronisationspulse (nach dem ersten Puls)) startet die ï¿½bertragung neu
+        MCBSP_FMKS(RCR, RDATDLY, 0BIT)          |	// keine Verzï¿½gerung (delay) der Daten
+        MCBSP_FMKS(RCR, RFRLEN1, OF(1))         |	// Lï¿½nge der Phase 1 --> 1 Wort
         MCBSP_FMKS(RCR, RWDLEN1, 16BIT)         |	// p AIC erwartet 16 Bit
         MCBSP_FMKS(RCR, RWDREVRS, DISABLE),		// 32-bit Reversal nicht genutzt
 		/* Sende-Control Register */
         MCBSP_FMKS(XCR, XPHASE, SINGLE)         |	//
-        MCBSP_FMKS(XCR, XFRLEN2, DEFAULT)       |	// Länge in Phase 2, unrelevant
-        MCBSP_FMKS(XCR, XWDLEN2, DEFAULT)       |	// Wortlänge in Phase 2, unrelevant
+        MCBSP_FMKS(XCR, XFRLEN2, DEFAULT)       |	// Lï¿½nge in Phase 2, unrelevant
+        MCBSP_FMKS(XCR, XWDLEN2, DEFAULT)       |	// Wortlï¿½nge in Phase 2, unrelevant
         MCBSP_FMKS(XCR, XCOMPAND, MSB)          |	// kein Compandierung der Daten (MSB first)
-        MCBSP_FMKS(XCR, XFIG, NO)               |	// Rahmensynchronisationspulse (nach dem ersten Puls)) startet die Übertragung neu
-        MCBSP_FMKS(XCR, XDATDLY, 0BIT)          |	// keine Verzögerung (delay) der Daten
-        MCBSP_FMKS(XCR, XFRLEN1, OF(1))         |	// Länge der Phase 1 --> 1 Wort
-        MCBSP_FMKS(XCR, XWDLEN1, 16BIT)         |	// Wortlänge in Phase 1 --> 16 bit
+        MCBSP_FMKS(XCR, XFIG, NO)               |	// Rahmensynchronisationspulse (nach dem ersten Puls)) startet die ï¿½bertragung neu
+        MCBSP_FMKS(XCR, XDATDLY, 0BIT)          |	// keine Verzï¿½gerung (delay) der Daten
+        MCBSP_FMKS(XCR, XFRLEN1, OF(1))         |	// Lï¿½nge der Phase 1 --> 1 Wort
+        MCBSP_FMKS(XCR, XWDLEN1, 16BIT)         |	// Wortlï¿½nge in Phase 1 --> 16 bit
         MCBSP_FMKS(XCR, XWDREVRS, DISABLE),		// 32-bit Reversal nicht genutzt
 		/* Sample Rate Generator Register */
         MCBSP_FMKS(SRGR, GSYNC, DEFAULT)        |	// Einstellungen nicht relevant da
-        MCBSP_FMKS(SRGR, CLKSP, DEFAULT)        |	// der McBSP1 als Slave läuft
+        MCBSP_FMKS(SRGR, CLKSP, DEFAULT)        |	// der McBSP1 als Slave lï¿½uft
         MCBSP_FMKS(SRGR, CLKSM, DEFAULT)        |	// und den Takt von aussen 
         MCBSP_FMKS(SRGR, FSGM, FSG)         |	// vorgegeben bekommt.
         MCBSP_FMKS(SRGR, FPER, DEFAULT)         |	// --
@@ -81,18 +82,18 @@ MCBSP_Config datainterface_config = {
         MCBSP_RCER_DEFAULT,				// dito
         MCBSP_XCER_DEFAULT,				// dito
 		/* Pinout Control Register */
-        MCBSP_FMKS(PCR, XIOEN, SP)              |	// Pin wird für serielle Schnittstelle verwendet (alternativ GPIO)
-        MCBSP_FMKS(PCR, RIOEN, SP)              |	// Pin wird für serielle Schnittstelle verwendet (alternativ GPIO)
-        MCBSP_FMKS(PCR, FSXM, EXTERNAL)         |	// Framesync- Signal für Sender kommt von extern (Slave)
-        MCBSP_FMKS(PCR, FSRM, EXTERNAL)         |	// Framesync- Signal für Empfänger kommt von extern (Slave)
-        MCBSP_FMKS(PCR, CLKXM, INPUT)           |	// Takt für Sender kommt von extern (Slave)
-        MCBSP_FMKS(PCR, CLKRM, INPUT)           |	// Takt für Empfänger kommt von extern (Slave)
+        MCBSP_FMKS(PCR, XIOEN, SP)              |	// Pin wird fï¿½r serielle Schnittstelle verwendet (alternativ GPIO)
+        MCBSP_FMKS(PCR, RIOEN, SP)              |	// Pin wird fï¿½r serielle Schnittstelle verwendet (alternativ GPIO)
+        MCBSP_FMKS(PCR, FSXM, EXTERNAL)         |	// Framesync- Signal fï¿½r Sender kommt von extern (Slave)
+        MCBSP_FMKS(PCR, FSRM, EXTERNAL)         |	// Framesync- Signal fï¿½r Empfï¿½nger kommt von extern (Slave)
+        MCBSP_FMKS(PCR, CLKXM, INPUT)           |	// Takt fï¿½r Sender kommt von extern (Slave)
+        MCBSP_FMKS(PCR, CLKRM, INPUT)           |	// Takt fï¿½r Empfï¿½nger kommt von extern (Slave)
         MCBSP_FMKS(PCR, CLKSSTAT, DEFAULT)      |	// unrelevant da PINS keine GPIOs
         MCBSP_FMKS(PCR, DXSTAT, DEFAULT)        |	// unrelevant da PINS keine GPIOs
         MCBSP_FMKS(PCR, FSXP, ACTIVEHIGH)       |	// Framesync senderseitig ist "activehigh"
-        MCBSP_FMKS(PCR, FSRP, ACTIVEHIGH)       |	// Framesync empfängerseitig ist "activehigh"
+        MCBSP_FMKS(PCR, FSRP, ACTIVEHIGH)       |	// Framesync empfï¿½ngerseitig ist "activehigh"
         MCBSP_FMKS(PCR, CLKXP, FALLING)         |	// Datum wird bei fallender Flanke gesendet
-        MCBSP_FMKS(PCR, CLKRP, RISING)			// Datum wird bei steigender Flanke übernommen
+        MCBSP_FMKS(PCR, CLKRP, RISING)			// Datum wird bei steigender Flanke ï¿½bernommen
 };
 
 /* template for a EDMA configuration */
@@ -176,8 +177,8 @@ main()
 	Config_DSK6713_AIC23();
 	
 	/* Configure McBSP1*/
-	hMcbsp = MCBSP_open(MCBSP_DEV1, MCBSP_OPEN_RESET); //Bevor ein McBSP Port verwendet werden kann, muss er erst mit dieser Funktion geöffnet werden
-    MCBSP_config(hMcbsp, &datainterface_config);	//Einstellungen übergeben
+	hMcbsp = MCBSP_open(MCBSP_DEV1, MCBSP_OPEN_RESET); //Bevor ein McBSP Port verwendet werden kann, muss er erst mit dieser Funktion geï¿½ffnet werden
+    MCBSP_config(hMcbsp, &datainterface_config);	//Einstellungen ï¿½bergeben
     
 	/* configure EDMA */
     config_EDMA();
@@ -228,7 +229,7 @@ void config_EDMA(void)
 	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);		// set TCC
 	configEDMARcv.dst = (Uint32)(&Buffer_in_pung);			// set destination address
 	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);		// write config to reload
-	/* could we need also some other EDMA read job?*/ /*p ja brauchen wir für pong receive und pingpong transmit*/
+	/* could we need also some other EDMA read job?*/ /*p ja brauchen wir fï¿½r pong receive und pingpong transmit*/
 
 	/* link transfers ping -> pong -> ping */
 	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  /* is that all? p  EDMA_link(CSL p.161) */
@@ -294,7 +295,7 @@ void config_EDMA(void)
 }
 
 void config_interrupts(void)
-{   //Lücken added
+{   //Lï¿½cken added
 	IRQ_map(IRQ_EVT_EDMAINT, 12);	//added Interrupt sources (here EDMAINT) and mapping to CPU interrupts (is chosen by 12)
 	IRQ_clear(IRQ_EVT_EDMAINT);				//first clear and then enable the interrupts
 	IRQ_enable(IRQ_EVT_EDMAINT);
@@ -310,10 +311,10 @@ void EDMA_interrupt_service(void)
 	static int xmtPongDone=0;
 	
 	if(EDMA_intTest(tccRcvPing)) {
-		EDMA_intClear(tccRcvPing); /* clear is mandatory p löscht gesetztes Bit (tccRcvPing)*/
+		EDMA_intClear(tccRcvPing); /* clear is mandatory p lï¿½scht gesetztes Bit (tccRcvPing)*/
 		rcvPingDone=1;
 	} /* p EDMA_intTest testet, ob der Wert von tccRcvPing (Interrupt number) im CIPR gesetz ist.
-		(z.B. tcc 15 (Bei uns eig immer 15) CIRR Bit 15 gesetzt oder nicht)  Rückgabewert:1=flag was set */
+		(z.B. tcc 15 (Bei uns eig immer 15) CIRR Bit 15 gesetzt oder nicht)  Rï¿½ckgabewert:1=flag was set */
 
 	else if(EDMA_intTest(tccRcvPong)) {
 		EDMA_intClear(tccRcvPong);
@@ -341,6 +342,7 @@ void EDMA_interrupt_service(void)
 		// processing in SWI
 		SWI_post(&SWI_process_pong);
 	}
+
 }
 
 void process_ping_SWI(void)					//Golden wire
