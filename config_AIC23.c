@@ -164,36 +164,35 @@ void Config_DSK6713_AIC23(void)
     MCBSP_config(hMcbsp0, &mcbspforAIC23Cfg);
     MCBSP_start(hMcbsp0, MCBSP_XMIT_START, 220);		//MCBSP_XMIT_START: start transmit (XRST)
   
-	/* jetzt alle Register konfigurieren */
-	/* ein Reset am Anfang ist immer gut, Register 15 --> 0 */
-	/* die 0 haben wir uns gespart, nach AIC23_registers aufzunehmen */
+	/* config all registers */
+	/* reset on start: 15 --> 0 */
     set_aic23_register(hMcbsp0,15,0);
 
-    /* power-down Register zuerst */
+    /* power-down Register first */
     set_aic23_register(hMcbsp0,6,myAIC23_registers[6]);
 
-    /* jetzt die anderen */
+    /* now others */
     for (i = 0; i < 6; i++)
       set_aic23_register(hMcbsp0,i,myAIC23_registers[i]);
     for (i = 7; i < 10; i++)
       set_aic23_register(hMcbsp0,i,myAIC23_registers[i]);     
 
-	 /* fertig, aber MCBSP nicht schließen, sonst kein Takt an Codec!*/
+	 /* finished, but don't close MCBSP, else there is no clock for codec!*/
 
 }
 
 
 static void set_aic23_register(MCBSP_Handle hMcbsp,unsigned short regnum, unsigned short regval)
 {
-	/* Programmierung erfolgt so, dass in B[15:9] die Registernummer steht und
-		in B[8:0] die zu schreibenden Daten */
+	/* Programming: B[15:9] contains registernumber and
+		            B[8:0]  contains the data */
 
-    /* zur Sicherheit maskieren auf 9 Bit */
-    regval &= 0x1ff;
+    /* to be sure, mask to 9 bits */
+    regval &= 0x01ff;
     
-    /* warten */
+    /* wait for ready */
     while (!(MCBSP_xrdy(hMcbsp)));
     
-    /* schreiben */
+    /* write */
     MCBSP_write(hMcbsp, ((regnum<<9) & 0xFE00) | (regval & 0x01FF));
 }
