@@ -29,7 +29,6 @@ short Buffer_in_pung[BUFFER_LEN];
 short Buffer_out_ping[BUFFER_LEN];
 #pragma DATA_SECTION(Buffer_out_pong, ".datenpuffer");
 short Buffer_out_pong[BUFFER_LEN];
-void config_interrupts(void);
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -171,6 +170,7 @@ main()
 {
 	
 	CSL_init();  
+
 	
 	/* Configure McBSP0 and AIC23 */
 	Config_DSK6713_AIC23();
@@ -347,14 +347,14 @@ void process_ping_SWI(void)					//Golden wire
 {
 	int i;
 	for(i=0; i<BUFFER_LEN; i++)
-		*(Buffer_out_ping+i) = *(Buffer_in_ping+i); 
+		*(Buffer_out_ping+i) = *(Buffer_in_ping+i);
 }
 
 void process_pong_SWI(void)
 {
 	int i;
 	for(i=0; i<BUFFER_LEN; i++)
-		*(Buffer_out_pong+i) = *(Buffer_in_pong+i); 
+		*(Buffer_out_pong+i) = *(Buffer_in_pong+i);
 }
 
 void SWI_LEDToggle(void)
@@ -366,11 +366,11 @@ void tsk_led_toggle(void)
 {
 	/* initializatoin of the task */
 	/* nothing to do */
-	
+
 	/* process */
 	while(1) {
 		SEM_pendBinary(&SEM_LEDToggle, SYS_FOREVER);
-		
+
 		DSK6713_LED_toggle(1);				//LED 1
 	}
 }
