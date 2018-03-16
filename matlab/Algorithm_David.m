@@ -10,6 +10,7 @@ input(201:400)  = 3 * (rand([1,200])-.5);
 input(401:600)  = 8 * (rand([1,200])-.5);
 input(601:800)  = 2 * (rand([1,200])-.5);
 input(801:1000) = 5 * (rand([1,200])-.5);
+input = awgn(input,5);
 
 output = zeros([1,900]);
 gain = zeros([1,900]);
@@ -22,7 +23,7 @@ for i = 1:9
     gain2 = desiredpower/meanpower(buffer2);
     for j = 1:100
         currentgain = gain1+((gain2-gain1)*j/100);
-        gain(((i-1)*100)+j)=currentgain;
+        gain(((i-1)*100)+j)=currentgain; % save for plot
         output(((i-1)*100)+j) = input(50+((i-1)*100)+j) * currentgain;
     end
 end
