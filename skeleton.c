@@ -15,6 +15,7 @@
 #include <dsk6713_led.h>
 #include "config_AIC23.h"
 #include "skeleton.h"
+#include "Debug/ProKaTimSS2018cfg.h"
 
 #define BUFFER_LEN 500
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
