@@ -162,7 +162,7 @@ void Config_DSK6713_AIC23(void)
 
 	hMcbsp0 = MCBSP_open(MCBSP_DEV0, MCBSP_OPEN_RESET);
     MCBSP_config(hMcbsp0, &mcbspforAIC23Cfg);
-    MCBSP_start(hMcbsp0, MCBSP_XMIT_START, 220);		//MCBSP_XMIT_START: start transmit (XRST)
+    MCBSP_start(hMcbsp0, MCBSP_XMIT_START|MCBSP_SRGR_START|MCBSP_SRGR_FRAMESYNC, 220);		//MCBSP_XMIT_START: start transmit (XRST)
   
 	/* config all registers */
 	/* reset on start: 15 --> 0 */
