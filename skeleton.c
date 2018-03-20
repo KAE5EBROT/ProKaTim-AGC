@@ -358,12 +358,12 @@ void process_pong_SWI(void)
 		*(Buffer_out_pong+i) = *(Buffer_in_pong+i);
 }
 
-void SWI_LEDToggle(void)
+void LEDToggle_SWI(void)
 {
 	SEM_postBinary(&SEM_LEDToggle);			//create a Semaphore and a task(insert a function: LED toggle)
 }
 
-void tsk_led_toggle(void)
+void led_toggle_tsk(void)
 {
 	/* initializatoin of the task */
 	/* nothing to do */
