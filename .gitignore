@@ -7,3 +7,9 @@ targetConfigs/
 .xdchelp
 .launches
 matlab/Algorithm_David\.asv
+
+*.mp3
+
+*.m4a
+
+matlab/lathe_david\.wav

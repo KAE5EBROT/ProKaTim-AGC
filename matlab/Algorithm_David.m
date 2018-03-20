@@ -3,42 +3,70 @@ clear
 clc
 
 %% Setup
-desiredpower = 5;
-input = zeros([1,1000]);
-input(1:200)    = 1 * (rand([1,200])-.5);
-input(201:400)  = 3 * (rand([1,200])-.5);
-input(401:600)  = 8 * (rand([1,200])-.5);
-input(601:800)  = 2 * (rand([1,200])-.5);
-input(801:1000) = 5 * (rand([1,200])-.5);
-input = awgn(input,5);
+desiredvol = .25;
+T          = 3/1000;
+maxgain    = 10;
+% filename   = 'lathe';
+% fileext    = '.wav';
+filename   = '(50) [DJ Isaac] Burn (Sub Zero Project Remix)';
+fileext    = '.mp3';
 
-output = zeros([1,900]);
-gain = zeros([1,900]);
+[input,fs] = audioread([filename,fileext]);
+totallen = length(input);
+blocksize = ceil((fs*T)/2)*2;
+blocknum = ceil(totallen/blocksize);
+input(blocksize*blocknum,1)=0; %extend input to multiple of blocks
+totallen = length(input);    %length has changed, recalculate
+totalwid = width(input);
+output = zeros([(totallen-blocksize),totalwid]);
+gain = zeros([1,(totallen-blocksize)]);
+gain2 = 0; %initialize for first run
 
+dispstat('','init'); %init status display
+dispstat('Starting...','keepthis','timestamp'); 
 %% Algorithm
-for i = 1:9
-    buffer1 = input(((i-1)*100+1):((i)*100));
-    buffer2 = input(((i)*100+1):((i+1)*100));
-    gain1 = desiredpower/meanpower(buffer1);
-    gain2 = desiredpower/meanpower(buffer2);
-    for j = 1:100
-        currentgain = gain1+((gain2-gain1)*j/100);
-        gain(((i-1)*100)+j)=currentgain; % save for plot
-        output(((i-1)*100)+j) = input(50+((i-1)*100)+j) * currentgain;
+for i = 0:(blocknum-2)
+    buffer = input(((i)*blocksize+1):((i+1)*blocksize),1:totalwid);
+    gain1 = gain2;
+    gain2 = desiredvol/meanpower(buffer);
+    if gain2 > maxgain
+        gain2 = 1;
     end
+    for j = 1:blocksize
+        currentgain = gain1+((gain2-gain1)*j/blocksize);
+        gain(((i)*blocksize)+j)=currentgain; % save for plot
+        output(((i)*blocksize)+j,1:totalwid) = input((blocksize/2)+((i)*blocksize)+j,1:totalwid) * currentgain;
+    end
+    dispstat(sprintf('Apply algorithm... Progress: %3.1f%%',((i/(blocknum-2))*100)),'timestamp');
 end
 
 %% Output
-plot(1:900,output,1:900,gain)
-figure
-plot(1:1000,input)
+subplot(2,1,1)
+plot((1:totallen)/fs,input)
+subplot(2,1,2)
+plot((1:(totallen-blocksize))/fs,output,(1:(totallen-blocksize))/fs,gain)
+dispstat('Writing audio...','keepprev','timestamp');
+output = output/max(abs(output));
+audiowrite([filename,'_david','.m4a'],output,fs);
+dispstat('Finished.','keepprev','timestamp');
 
 %% Separate functions
 function p = meanpower(Buffer)
     p1=0;
     LEN = length(Buffer);
-    for k = 1:LEN
-        p1=p1+(Buffer(k))^2; 
-    end 
+    if width(Buffer) == 2
+        for k = 1:LEN
+            p1=p1+(Buffer(k))^2; 
+        end 
+    else
+        for k = 1:LEN
+            p1=p1+(Buffer(k,1))^2+(Buffer(k,2))^2; 
+        end 
+        p1 = p1/2;
+    end
     p=sqrt(p1/LEN);
+end
+
+function w = width(input)
+    [~,w] = size(input);
 end
