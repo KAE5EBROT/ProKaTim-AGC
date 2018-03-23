@@ -26,6 +26,21 @@ bios.MEM.instance("IRAM").len = 0x0003e000;
 bios.MEM.instance("MyBuffers").len = 0x00002000;
 bios.MEM.instance("MyBuffers").base = 0x0003e000;
 bios.MEM.instance("MyBuffers").createHeap = 0;
+bios.SWI.create("SWI_process_ping");
+bios.SWI.instance("SWI_process_ping").order = 4;
+bios.SWI.instance("SWI_process_ping").fxn = prog.extern("process_ping_SWI");
+bios.SWI.create("SWI_process_pong");
+bios.SWI.instance("SWI_process_pong").order = 5;
+bios.SWI.instance("SWI_process_pong").fxn = prog.extern("process_pong_SWI");
+bios.HWI.instance("HWI_INT6").interruptSource = prog.get("MCSP_1_Receive");
+bios.HWI.instance("HWI_INT6").fxn = prog.extern("HWI1");
+bios.HWI.instance("HWI_INT6").fxn = prog.extern("EDMA_interrupt_service");
+bios.HWI.instance("HWI_INT12").fxn = prog.extern("EDMA_interrupt_service");
+bios.HWI.instance("HWI_INT12").useDispatcher = 1;
+bios.HWI.instance("HWI_INT8").useDispatcher = 1;
+bios.HWI.instance("HWI_INT12").useDispatcher = 0;
+bios.HWI.instance("HWI_INT12").useDispatcher = 1;
+bios.HWI.instance("HWI_INT6").useDispatcher = 1;
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();
