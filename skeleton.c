@@ -35,7 +35,7 @@ short Buffer_out_pong[BUFFER_LEN];
 MCBSP_Config datainterface_config = {
 		/* McBSP Control Register */
         MCBSP_FMKS(SPCR, FREE, NO)              |	// Freilauf 
-        MCBSP_FMKS(SPCR, SOFT, YES)          	|	// p Clock stoppt nicht beim debuggen, aber ist glaub egal, weil wir den Clock nicht vorgeben
+        MCBSP_FMKS(SPCR, SOFT, NO)          	|	// p Clock stoppt nicht beim debuggen, aber ist glaub egal, weil wir den Clock nicht vorgeben
         MCBSP_FMKS(SPCR, FRST, YES)             |	// Framesync ist ein
         MCBSP_FMKS(SPCR, GRST, YES)             |	// Reset aus, damit laeuft der Samplerate- Generator
         MCBSP_FMKS(SPCR, XINTM, XRDY)           |	// p Sender Interrupt wird durch "XRDY-Bit" ausgeloest. Interrupt koennen wir vielleicht fuer EDMA nutzen.
@@ -98,7 +98,7 @@ MCBSP_Config datainterface_config = {
 /* template for a EDMA configuration */
 EDMA_Config configEDMARcv = {
     EDMA_FMKS(OPT, PRI, LOW)          |   // auf beide Queues verteilen
-    EDMA_FMKS(OPT, ESIZE, 32BIT)       |  // Element size
+    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size
     EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
     EDMA_FMKS(OPT, SUM, NONE)          |  // Quell-update mode -> FEST (McBSP)!!!
     EDMA_FMKS(OPT, 2DD, NO)            |  // kein 2D-Transfer
@@ -124,7 +124,7 @@ EDMA_Config configEDMARcv = {
 
 EDMA_Config configEDMAXmt = {
 	EDMA_FMKS(OPT, PRI, LOW)          |   // auf beide Queues verteilen
-	EDMA_FMKS(OPT, ESIZE, 32BIT)       |  // Element size   //32 bit geändert, da immer nur nach 32 Bit XINT Interrupt kommt
+	EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size   //32 bit geändert, da immer nur nach 32 Bit XINT Interrupt kommt
 	EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
 	EDMA_FMKS(OPT, SUM, INC)           |  // Quell
 	EDMA_FMKS(OPT, 2DD, NO)            |  // 2kein 2D-Transfer
@@ -144,8 +144,8 @@ EDMA_Config configEDMAXmt = {
 	EDMA_FMKS(IDX, FRMIDX, DEFAULT)    |  // Frame index Wert
 	EDMA_FMKS(IDX, ELEIDX, DEFAULT),      // Element index Wert
 
-	EDMA_FMK (RLD, ELERLD, 0)       |  // Reload Element
-	EDMA_FMK (RLD, LINK, 0)            // Reload Link
+	EDMA_FMK (RLD, ELERLD, 0)     	  |  // Reload Element
+	EDMA_FMK (RLD, LINK, 0)       	     // Reload Link
 };
 
 /* Transfer-Complete-Codes for EDMA-Jobs */
@@ -174,11 +174,11 @@ main()
 	/* Configure McBSP0 and AIC23 */
 	Config_DSK6713_AIC23();
 
-	config_EDMA();
-
 	/* Configure McBSP1*/
 	hMcbsp = MCBSP_open(MCBSP_DEV1, MCBSP_OPEN_RESET); //Bevor ein McBSP Port verwendet werden kann, muss er erst mit dieser Funktion geoeffnet werden
     MCBSP_config(hMcbsp, &datainterface_config);	//Einstellungen uebergeben
+
+    config_EDMA();
 
     config_interrupts();
 
@@ -186,6 +186,7 @@ main()
     MCBSP_start(hMcbsp, MCBSP_XMIT_START, 0xffffffff);	//start transmit (XRST is set --> Serial port transmitter is enabled)
 
     MCBSP_write(hMcbsp,0x00);							//one shot
+
 //    while(1)
 //    {
 //    while(!MCBSP_xrdy(hMcbsp));						/* wait for ready (XRDY=1: Transmitter is ready for new data in DXR)  */
@@ -206,20 +207,14 @@ void config_EDMA(void)
 
 	tccRcvPing = EDMA_intAlloc(-1);                         // next available TCC Transfer Complete Code
 	tccRcvPong = EDMA_intAlloc(-1);							//   indicate which channel (parameter set) is ready
-	tccRcvPung = EDMA_intAlloc(-1);							//
+	//tccRcvPung = EDMA_intAlloc(-1);							//
 
 	/* configure rcvchannel*/
 	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
 	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPing);		// set TCC
 	configEDMARcv.dst = (Uint32)(Buffer_in_ping);			// set destination address
 	EDMA_config(hEdmaRcv, &configEDMARcv);					// write config to channel
-
-	/* configure reloadrcvping*/
-
-	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPing);		// set TCC
-	configEDMARcv.dst = (Uint32)(Buffer_in_ping);			// set destination address
-	EDMA_config(hEdmaReloadRcvPing, &configEDMARcv);		// write config to reload
+	EDMA_config(hEdmaReloadRcvPing, &configEDMARcv);		/*configure reloadrcvping*/
 
 	/* configure reloadrcvpong*/
 	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
@@ -227,18 +222,18 @@ void config_EDMA(void)
 	configEDMARcv.dst = (Uint32)(Buffer_in_pong);			// set destination address
 	EDMA_config(hEdmaReloadRcvPong, &configEDMARcv);		// write config to reload
 
-	/* configure reloadrcvpung*/
-	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);		// set TCC
-	configEDMARcv.dst = (Uint32)(Buffer_in_pung);			// set destination address
-	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);		// write config to reload
+//	/* configure reloadrcvpung*/
+//	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
+//	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);		// set TCC
+//	configEDMARcv.dst = (Uint32)(Buffer_in_pung);			// set destination address
+//	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);		// write config to reload
 	/* could we need also some other EDMA read job?*/ /*p ja brauchen wir fuer pong receive und pingpong transmit*/
 
 	/* link transfers ping -> pong -> ping */
 	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  /* is that all? p  EDMA_link(CSL p.161) */
 	EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
 	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPing); //to include pung change ping
-	EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
+	//EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
 
 	/* do you want to hear music? When yes you need a EDMA writing */
 
@@ -257,12 +252,7 @@ void config_EDMA(void)
 	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);		// set TCC
 	configEDMAXmt.src = (Uint32)(Buffer_out_ping);			// set destination address
 	EDMA_config(hEdmaXmt, &configEDMAXmt);					// write config to channel
-
-	/* configure reloadxmtping*/
-	configEDMAXmt.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);		// set TCC
-	configEDMAXmt.src = (Uint32)(Buffer_out_ping);			// set destination address
-	EDMA_config(hEdmaReloadXmtPing, &configEDMAXmt);		// write config to reload
+	EDMA_config(hEdmaReloadXmtPing, &configEDMAXmt);		/*configure reloadrcvping*/
 
 	/* configure reloadxmtpong*/
 	configEDMAXmt.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
@@ -287,8 +277,8 @@ void config_EDMA(void)
 	EDMA_intClear(tccXmtPong);
 	EDMA_intEnable(tccXmtPong);
 	/* p added*/
-	EDMA_intClear(tccRcvPung);
-	EDMA_intEnable(tccRcvPung);
+//	EDMA_intClear(tccRcvPung);
+//	EDMA_intEnable(tccRcvPung);
 
 	/* which EDMAs do we have to enable? */
 	EDMA_enableChannel(hEdmaRcv);
@@ -299,10 +289,8 @@ void config_EDMA(void)
 void config_interrupts(void)
 {   //Luecken added
 	//IRQ_map(IRQ_EVT_EDMAINT, 12);	//added Interrupt sources (here EDMAINT) and mapping to CPU interrupts (is chosen by 12)
-	IRQ_clear(IRQ_EVT_RINT1);				//first clear and then enable the interrupts
-	IRQ_clear(IRQ_EVT_XINT1);
-	IRQ_enable(IRQ_EVT_RINT1);
-	IRQ_enable(IRQ_EVT_XINT1);
+	IRQ_clear(IRQ_EVT_EDMAINT);				//first clear and then enable the interrupts
+	IRQ_enable(IRQ_EVT_EDMAINT);
 	IRQ_globalEnable();
 }
 
@@ -325,7 +313,7 @@ void EDMA_interrupt_service(void)
 		rcvPongDone=1;
 	}
 
-	else if(EDMA_intTest(tccXmtPing)) {     //transmit ping is finished  p added
+	if(EDMA_intTest(tccXmtPing)) {     //transmit ping is finished  p added
 			EDMA_intClear(tccXmtPing);
 			xmtPingDone=1;
 		}
