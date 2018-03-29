@@ -97,13 +97,13 @@ MCBSP_Config datainterface_config = {
 
 /* template for a EDMA configuration */
 EDMA_Config configEDMARcv = {
-    EDMA_FMKS(OPT, PRI, LOW)          |   // auf beide Queues verteilen
-    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size
+    EDMA_FMKS(OPT, PRI, LOW)           |  // auf beide Queues verteilen
+    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size (linker und rechter Channel wird nacheinander übertragen)
     EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
     EDMA_FMKS(OPT, SUM, NONE)          |  // Quell-update mode -> FEST (McBSP)!!!
     EDMA_FMKS(OPT, 2DD, NO)            |  // kein 2D-Transfer
-    EDMA_FMKS(OPT, DUM, INC)           |  // Ziel-update mode p Increment
-    EDMA_FMKS(OPT, TCINT,YES)         |   // EDMA interrupt erzeugen? p Ja, Interrupt wird nach Sendem von einem Element gesetzt
+    EDMA_FMKS(OPT, DUM, INC)           |  // Ziel-update mode (Increment)
+    EDMA_FMKS(OPT, TCINT,YES)          |  // EDMA interrupt erzeugen? Ja, Interrupt wird nach Sendem von einem Element gesetzt (Ele. synch.)
     EDMA_FMKS(OPT, TCC, OF(0))         |  // Transfer complete code (TCC)
     EDMA_FMKS(OPT, LINK, YES)          |  // Link Parameter nutzen?
     EDMA_FMKS(OPT, FS, NO),               // Frame Sync nutzen?
@@ -113,13 +113,13 @@ EDMA_Config configEDMARcv = {
     EDMA_FMKS(CNT, FRMCNT, OF(0))      |  // Anzahl Frames
     EDMA_FMK (CNT, ELECNT, BUFFER_LEN),   // Anzahl Elemente
 
-    (Uint32)Buffer_in_ping,       		  // Ziel-Adresse, p Casten von Short-> Uint32
+    (Uint32)Buffer_in_ping,       		  // Ziel-Adresse (Casten von Short-> Uint32)
 
     EDMA_FMKS(IDX, FRMIDX, DEFAULT)    |  // Frame index Wert
     EDMA_FMKS(IDX, ELEIDX, DEFAULT),      // Element index Wert
 
-    EDMA_FMK (RLD, ELERLD, 0)       |  // Reload Element
-    EDMA_FMK (RLD, LINK, 0)            // Reload Link
+    EDMA_FMK (RLD, ELERLD, 0)          |  // Reload Element
+    EDMA_FMK (RLD, LINK, 0)               // Reload Link
 };
 
 EDMA_Config configEDMAXmt = {
@@ -129,7 +129,7 @@ EDMA_Config configEDMAXmt = {
 	EDMA_FMKS(OPT, SUM, INC)           |  // Quell
 	EDMA_FMKS(OPT, 2DD, NO)            |  // 2kein 2D-Transfer
 	EDMA_FMKS(OPT, DUM, NONE)          |  // Ziel-update mode -> FEST (McBSP)!!!
-	EDMA_FMKS(OPT, TCINT,YES)         |   // EDMA interrupt erzeugen? p Ja, Interrupt wird nach Sendem von einem Element gesetzt
+	EDMA_FMKS(OPT, TCINT,YES)         |   // EDMA interrupt erzeugen? Ja, Interrupt wird nach Sendem von einem Frame (oder nach einem Job) gesetzt
 	EDMA_FMKS(OPT, TCC, OF(0))         |  // Transfer complete code (TCC)
 	EDMA_FMKS(OPT, LINK, YES)          |  // Link Parameter nutzen?
 	EDMA_FMKS(OPT, FS, NO),               // Frame Sync nutzen?
@@ -187,78 +187,72 @@ main()
 
     MCBSP_write(hMcbsp,0x00);							//one shot
 
-//    while(1)
-//    {
-//    while(!MCBSP_xrdy(hMcbsp));						/* wait for ready (XRDY=1: Transmitter is ready for new data in DXR)  */
-//    MCBSP_write(hMcbsp,MCBSP_read(hMcbsp));			//transmit data (MCBSP_read(hMcbsp) reads data)
-//    }
 }
 
 //
 void config_EDMA(void)
 {
 /* ################ Config receive ################ */
-	hEdmaRcv = EDMA_open(EDMA_CHA_REVT1, EDMA_OPEN_RESET);  	// EDMA Channel for REVT1 // open a Channel, open EDMA
-	hEdmaReloadRcvPing = EDMA_allocTable(-1);               			// Reload-Parameters
-	hEdmaReloadRcvPong = EDMA_allocTable(-1);               			// Reload-Parameters
-	hEdmaReloadRcvPung = EDMA_allocTable(-1);               			// Reload-Parameters
+	hEdmaRcv = EDMA_open(EDMA_CHA_REVT1, EDMA_OPEN_RESET);  	// open EDMA Channel for REVT1
+	hEdmaReloadRcvPing = EDMA_allocTable(-1);               	// Reload-Parameters
+	hEdmaReloadRcvPong = EDMA_allocTable(-1);               	// Reload-Parameters
+	hEdmaReloadRcvPung = EDMA_allocTable(-1);               	// Reload-Parameters
 
-	configEDMARcv.src = MCBSP_getRcvAddr(hMcbsp);         	//  source addr , constant
+	configEDMARcv.src = MCBSP_getRcvAddr(hMcbsp);         		// source addr , constant
 
-	tccRcvPing = EDMA_intAlloc(-1);                         // next available TCC Transfer Complete Code
-	tccRcvPong = EDMA_intAlloc(-1);							//   indicate which channel (parameter set) is ready
-	//tccRcvPung = EDMA_intAlloc(-1);							//
+	tccRcvPing = EDMA_intAlloc(-1);                        		// next available TCC Transfer Complete Code
+	tccRcvPong = EDMA_intAlloc(-1);								// indicate which channel (parameter set) is ready
+	tccRcvPung = EDMA_intAlloc(-1);
 
 	/* configure rcvchannel*/
-	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPing);		// set TCC
-	configEDMARcv.dst = (Uint32)(Buffer_in_ping);			// set destination address
-	EDMA_config(hEdmaRcv, &configEDMARcv);					// write config to channel
-	EDMA_config(hEdmaReloadRcvPing, &configEDMARcv);		/*configure reloadrcvping*/
+	configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPing);			// set TCC
+	configEDMARcv.dst = (Uint32)(Buffer_in_ping);				// set destination address
+	EDMA_config(hEdmaRcv, &configEDMARcv);						// write config to channel
+	EDMA_config(hEdmaReloadRcvPing, &configEDMARcv);			/*configure reloadrcvping*/
 
 	/* configure reloadrcvpong*/
-	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPong);		// set TCC
-	configEDMARcv.dst = (Uint32)(Buffer_in_pong);			// set destination address
-	EDMA_config(hEdmaReloadRcvPong, &configEDMARcv);		// write config to reload
+	configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPong);			// set TCC
+	configEDMARcv.dst = (Uint32)(Buffer_in_pong);				// set destination address
+	EDMA_config(hEdmaReloadRcvPong, &configEDMARcv);			// write config to reload
 
-//	/* configure reloadrcvpung*/
-//	configEDMARcv.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-//	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);		// set TCC
-//	configEDMARcv.dst = (Uint32)(Buffer_in_pung);			// set destination address
-//	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);		// write config to reload
-	/* could we need also some other EDMA read job?*/ /*p ja brauchen wir fuer pong receive und pingpong transmit*/
+	/* configure reloadrcvpung*/
+	configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+	configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);			// set TCC
+	configEDMARcv.dst = (Uint32)(Buffer_in_pung);				// set destination address
+	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);			// write config to reload
 
 	/* link transfers ping -> pong -> ping */
-	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  /* is that all? p  EDMA_link(CSL p.161) */
+	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  			/* is that all? EDMA_linking */
 	EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
-	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPing); //to include pung change ping
-	//EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
+	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPing); 	//to include pung change ping
+	EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
 
 	/* do you want to hear music? When yes you need a EDMA writing */
 
 /* ################ Config transmit ################ */
-	hEdmaXmt = EDMA_open(EDMA_CHA_XEVT1, EDMA_OPEN_RESET);  // EDMA Channel for XEVT1 // open a Channel, open EDMA
-	hEdmaReloadXmtPing = EDMA_allocTable(-1);              // Reload-Parameters
-	hEdmaReloadXmtPong = EDMA_allocTable(-1);              // Reload-Parameters
+	hEdmaXmt = EDMA_open(EDMA_CHA_XEVT1, EDMA_OPEN_RESET);  	// open EDMA Channel for XEVT1
+	hEdmaReloadXmtPing = EDMA_allocTable(-1);              		// Reload-Parameters
+	hEdmaReloadXmtPong = EDMA_allocTable(-1);              		// Reload-Parameters
 
-	configEDMAXmt.dst = MCBSP_getXmtAddr(hMcbsp);          //  source addr wird zugewiesen
+	configEDMAXmt.dst = MCBSP_getXmtAddr(hMcbsp);          		//  destination addr wird zugewiesen
 
 	tccXmtPing = EDMA_intAlloc(-1);
 	tccXmtPong = EDMA_intAlloc(-1);
 
 	/* configure xmtchannel*/
-	configEDMAXmt.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);		// set TCC
-	configEDMAXmt.src = (Uint32)(Buffer_out_ping);			// set destination address
-	EDMA_config(hEdmaXmt, &configEDMAXmt);					// write config to channel
-	EDMA_config(hEdmaReloadXmtPing, &configEDMAXmt);		/*configure reloadrcvping*/
+	configEDMAXmt.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);			// set TCC
+	configEDMAXmt.src = (Uint32)(Buffer_out_ping);				// set destination address
+	EDMA_config(hEdmaXmt, &configEDMAXmt);						// write config to channel
+	EDMA_config(hEdmaReloadXmtPing, &configEDMAXmt);			/*configure reloadrcvping*/
 
 	/* configure reloadxmtpong*/
-	configEDMAXmt.opt &= 0xFFF0FFFF;						//Reset TCC for new TCC
-	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPong);		// set TCC
-	configEDMAXmt.src = (Uint32)(Buffer_out_pong);			// set destination address
-	EDMA_config(hEdmaReloadXmtPong, &configEDMAXmt);		// write config to reload
+	configEDMAXmt.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+	configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPong);			// set TCC
+	configEDMAXmt.src = (Uint32)(Buffer_out_pong);				// set destination address
+	EDMA_config(hEdmaReloadXmtPong, &configEDMAXmt);			// write config to reload
 
 	EDMA_link(hEdmaXmt,hEdmaReloadXmtPong);
 	EDMA_link(hEdmaReloadXmtPing,hEdmaReloadXmtPong);
@@ -287,9 +281,8 @@ void config_EDMA(void)
 }
 
 void config_interrupts(void)
-{   //Luecken added
-	//IRQ_map(IRQ_EVT_EDMAINT, 12);	//added Interrupt sources (here EDMAINT) and mapping to CPU interrupts (is chosen by 12)
-	IRQ_clear(IRQ_EVT_EDMAINT);				//first clear and then enable the interrupts
+{
+	IRQ_clear(IRQ_EVT_EDMAINT);									//first clear and then enable the interrupts
 	IRQ_enable(IRQ_EVT_EDMAINT);
 	IRQ_globalEnable();
 }
@@ -350,20 +343,20 @@ void process_pong_SWI(void)
 		*(Buffer_out_pong+i) = *(Buffer_in_pong+i);
 }
 
-//void SWI_LEDToggle(void)
-//{
-//	SEM_postBinary(&SEM_LEDToggle);			//create a Semaphore and a task(insert a function: LED toggle)
-//}
-//
-//void tsk_led_toggle(void)
-//{
-//	/* initializatoin of the task */
-//	/* nothing to do */
-//
-//	/* process */
-//	while(1) {
-//		SEM_pendBinary(&SEM_LEDToggle, SYS_FOREVER);
-//
-//		DSK6713_LED_toggle(1);				//LED 1
-//	}
-//}
+void SWI_LEDToggle(void)
+{
+	SEM_postBinary(&SEM_LEDToggle);			//create a Semaphore and a task(insert a function: LED toggle)
+}
+
+void tsk_led_toggle(void)
+{
+	/* initializatoin of the task */
+	/* nothing to do */
+
+	/* process */
+	while(1) {
+		SEM_pendBinary(&SEM_LEDToggle, SYS_FOREVER);
+
+		DSK6713_LED_toggle(1);				//LED 1
+	}
+}
