@@ -31,8 +31,10 @@ short Buffer_out_ping[BUFFER_LEN];
 #pragma DATA_SECTION(Buffer_out_pong, ".datenpuffer");
 short Buffer_out_pong[BUFFER_LEN];
 
-short* psprocessin;
+short* psprocessin1;
+short* psprocessin2;
 short* psprocessout;
+float desired_power;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -325,13 +327,16 @@ void EDMA_interrupt_service(void)
 		case processNone:
 			break;
 		case processPing:
-			psprocessin = Buffer_in_ping;
+			psprocessin1 = Buffer_in_ping;
+			psprocessin2 = Buffer_in_pung;
 			break;
 		case processPong:
-			psprocessin = Buffer_in_pong;
+			psprocessin1 = Buffer_in_pong;
+			psprocessin2 = Buffer_in_ping;
 			break;
 		case processPung:
-			psprocessin = Buffer_in_pung;
+			psprocessin1 = Buffer_in_pung;
+			psprocessin2 = Buffer_in_pong;
 		}
 		switch(eprocessout){
 		case processNone:
@@ -352,8 +357,18 @@ void EDMA_interrupt_service(void)
 void process_ping_SWI(void)					//Golden wire
 {
 	int i;
+	static float power=0,gain=0,gain_old=0;
+
+	gain_old=gain;
+
+	for(i=0; i<BUFFER_LEN; i++){
+		power+=(psprocessin1[i])^2;
+	}
+	power=sqrt(power);
+
 	for(i=0; i<BUFFER_LEN; i++)
-		*(psprocessout+i) = *(psprocessin+i);
+		*(psprocessout+i) = *(psprocessin1+i);
+
 }
 
 void SWI_LEDToggle(void)
