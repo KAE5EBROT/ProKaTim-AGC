@@ -31,6 +31,11 @@ short Buffer_out_ping[BUFFER_LEN];
 #pragma DATA_SECTION(Buffer_out_pong, ".datenpuffer");
 short Buffer_out_pong[BUFFER_LEN];
 
+static enum_process eprocessin = processNone;
+static enum_process eprocesout = processNone;
+short* psprocessin;
+short* psprocessout;
+
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
 		/* McBSP Control Register */
@@ -226,7 +231,7 @@ void config_EDMA(void)
 	/* link transfers ping -> pong -> ping */
 	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  			/* is that all? EDMA_linking */
 	EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
-	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPing); 	//to include pung change ping
+	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPung); 	//to include pung change ping
 	EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
 
 	/* do you want to hear music? When yes you need a EDMA writing */
@@ -292,6 +297,7 @@ void EDMA_interrupt_service(void)
 {
 	static int rcvPingDone=0; //static variables, to keep their values
 	static int rcvPongDone=0;
+	static int rcvPungDone=0;
 	static int xmtPingDone=0;
 	static int xmtPongDone=0;
 
@@ -305,6 +311,10 @@ void EDMA_interrupt_service(void)
 		EDMA_intClear(tccRcvPong);
 		rcvPongDone=1;
 	}
+	else if(EDMA_intTest(tccRcvPung)) {
+		EDMA_intClear(tccRcvPung);
+		rcvPungDone=1;
+	}
 
 	if(EDMA_intTest(tccXmtPing)) {     //transmit ping is finished  p added
 			EDMA_intClear(tccXmtPing);
@@ -315,17 +325,24 @@ void EDMA_interrupt_service(void)
 				xmtPongDone=1;
 			}
 
-	if(rcvPingDone && xmtPingDone) {
+	if((rcvPingDone||rcvPongDone||rcvPungDone) && (xmtPingDone||xmtPongDone)) {
+		if(rcvPingDone)
+			psprocessin = Buffer_in_ping;
+		else if(rcvPongDone)
+			psprocessin = Buffer_in_pong;
+		else if(rcvPungDone)
+			psprocessin = Buffer_in_pung;
+		if(xmtPingDone)
+			psprocessout = Buffer_out_ping;
+		else if(xmtPongDone)
+			psprocessout = Buffer_out_pong;
 		rcvPingDone=0;
-		xmtPingDone=0;
-		// processing in SWI
-		SWI_post(&SWI_process_ping);
-	}
-	else if(rcvPongDone && xmtPongDone) {
 		rcvPongDone=0;
+		rcvPungDone=0;
+		xmtPingDone=0;
 		xmtPongDone=0;
 		// processing in SWI
-		SWI_post(&SWI_process_pong);
+		SWI_post(&SWI_process_ping);
 	}
 }
 
@@ -333,14 +350,7 @@ void process_ping_SWI(void)					//Golden wire
 {
 	int i;
 	for(i=0; i<BUFFER_LEN; i++)
-		*(Buffer_out_ping+i) = *(Buffer_in_ping+i);
-}
-
-void process_pong_SWI(void)
-{
-	int i;
-	for(i=0; i<BUFFER_LEN; i++)
-		*(Buffer_out_pong+i) = *(Buffer_in_pong+i);
+		*(psprocessout+i) = *(psprocessin+i);
 }
 
 void SWI_LEDToggle(void)

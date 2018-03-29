@@ -29,9 +29,6 @@ bios.MEM.instance("MyBuffers").createHeap = 0;
 bios.SWI.create("SWI_process_ping");
 bios.SWI.instance("SWI_process_ping").order = 4;
 bios.SWI.instance("SWI_process_ping").fxn = prog.extern("process_ping_SWI");
-bios.SWI.create("SWI_process_pong");
-bios.SWI.instance("SWI_process_pong").order = 5;
-bios.SWI.instance("SWI_process_pong").fxn = prog.extern("process_pong_SWI");
 bios.HWI.instance("HWI_INT8").fxn = prog.extern("EDMA_interrupt_service");
 bios.HWI.instance("HWI_INT8").useDispatcher = 1;
 bios.SEM.create("SEM_LEDToggle");
@@ -41,7 +38,6 @@ bios.TSK.instance("TSK_LED").fxn = prog.extern("tsk_led_toggle");
 bios.PRD.create("PRD_SWI_LEDToggle");
 bios.PRD.instance("PRD_SWI_LEDToggle").order = 1;
 bios.PRD.instance("PRD_SWI_LEDToggle").fxn = prog.extern("SWI_LEDToggle");
-bios.PRD.instance("PRD_SWI_LEDToggle").period = 1000;
 bios.PRD.instance("PRD_SWI_LEDToggle").period = 250;
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
