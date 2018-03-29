@@ -4,12 +4,14 @@ clc
 
 %% Setup
 desiredvol = .25;
-T          = 3/1000;
+T          = 5/1000;
 maxgain    = 10;
 % filename   = 'lathe';
 % fileext    = '.wav';
-filename   = '(50) [DJ Isaac] Burn (Sub Zero Project Remix)';
-fileext    = '.mp3';
+% filename   = '(50) [DJ Isaac] Burn (Sub Zero Project Remix)';
+% fileext    = '.mp3';
+filename   = 'generated_sine';
+fileext    = '.m4a';
 
 [input,fs] = audioread([filename,fileext]);
 totallen = length(input);
@@ -37,6 +39,7 @@ for i = 0:(blocknum-2)
         gain(((i)*blocksize)+j)=currentgain; % save for plot
         output(((i)*blocksize)+j,1:totalwid) = input((blocksize/2)+((i)*blocksize)+j,1:totalwid) * currentgain;
     end
+    %statbar = statbargen((((i/(blocknum-2))*100)),20);
     dispstat(sprintf('Apply algorithm... Progress: %3.1f%%',((i/(blocknum-2))*100)),'timestamp');
 end
 
@@ -54,7 +57,7 @@ dispstat('Finished.','keepprev','timestamp');
 function p = meanpower(Buffer)
     p1=0;
     LEN = length(Buffer);
-    if width(Buffer) == 2
+    if width(Buffer) == 1
         for k = 1:LEN
             p1=p1+(Buffer(k))^2; 
         end 
@@ -70,3 +73,7 @@ end
 function w = width(input)
     [~,w] = size(input);
 end
+
+% function barstr = statbar(progress,barnum)
+%     barstr = (char
+% end
