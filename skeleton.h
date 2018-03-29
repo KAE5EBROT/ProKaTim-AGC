@@ -8,11 +8,11 @@ extern void config_interrupts(void);
 extern void SWI_LEDToggle(void);
 extern void tsk_led_toggle(void);
 
-typedef enum{
-	processNone,
-	processPing,
-	processPong,
-	processPung
+typedef enum{    // enumeration for simple communication
+	processNone, //=0 dont process anything
+	processPing, //=1
+	processPong, //=2
+	processPung  //=3
 }enum_process;
 
 	

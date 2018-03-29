@@ -17,7 +17,7 @@
 #include "skeleton.h"
 #include "Debug/ProKaTimSS2018cfg.h"
 
-#define BUFFER_LEN 500
+#define BUFFER_LEN 4800
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
 #pragma DATA_SECTION(Buffer_in_ping, ".datenpuffer");
@@ -31,8 +31,6 @@ short Buffer_out_ping[BUFFER_LEN];
 #pragma DATA_SECTION(Buffer_out_pong, ".datenpuffer");
 short Buffer_out_pong[BUFFER_LEN];
 
-static enum_process eprocessin = processNone;
-static enum_process eprocesout = processNone;
 short* psprocessin;
 short* psprocessout;
 
@@ -295,52 +293,57 @@ void config_interrupts(void)
 
 void EDMA_interrupt_service(void)
 {
-	static int rcvPingDone=0; //static variables, to keep their values
-	static int rcvPongDone=0;
-	static int rcvPungDone=0;
-	static int xmtPingDone=0;
-	static int xmtPongDone=0;
+	static enum_process eprocessin = processNone;
+	static enum_process eprocessout = processNone;
 
 	if(EDMA_intTest(tccRcvPing)) {
 		EDMA_intClear(tccRcvPing); /* clear is mandatory p loescht gesetztes Bit (tccRcvPing)*/
-		rcvPingDone=1;
+		eprocessin=processPing;
 	} /* p EDMA_intTest testet, ob der Wert von tccRcvPing (Interrupt number) im CIPR gesetz ist.
 		(z.B. tcc 15 (Bei uns eig immer 15) CIRR Bit 15 gesetzt oder nicht)  Rueckgabewert:1=flag was set */
 
 	else if(EDMA_intTest(tccRcvPong)) {
 		EDMA_intClear(tccRcvPong);
-		rcvPongDone=1;
+		eprocessin=processPong;
 	}
 	else if(EDMA_intTest(tccRcvPung)) {
 		EDMA_intClear(tccRcvPung);
-		rcvPungDone=1;
+		eprocessin=processPung;
 	}
 
 	if(EDMA_intTest(tccXmtPing)) {     //transmit ping is finished  p added
-			EDMA_intClear(tccXmtPing);
-			xmtPingDone=1;
-		}
+		EDMA_intClear(tccXmtPing);
+		eprocessout=processPing;
+	}
 	else if(EDMA_intTest(tccXmtPong)) {     //transmit pong is finished  p added
-				EDMA_intClear(tccXmtPong);
-				xmtPongDone=1;
-			}
+		EDMA_intClear(tccXmtPong);
+		eprocessout=processPong;
+	}
 
-	if((rcvPingDone||rcvPongDone||rcvPungDone) && (xmtPingDone||xmtPongDone)) {
-		if(rcvPingDone)
+	if(eprocessin && eprocessout) {
+		switch(eprocessin){
+		case processNone:
+			break;
+		case processPing:
 			psprocessin = Buffer_in_ping;
-		else if(rcvPongDone)
+			break;
+		case processPong:
 			psprocessin = Buffer_in_pong;
-		else if(rcvPungDone)
+			break;
+		case processPung:
 			psprocessin = Buffer_in_pung;
-		if(xmtPingDone)
+		}
+		switch(eprocessout){
+		case processNone:
+			break;
+		case processPing:
 			psprocessout = Buffer_out_ping;
-		else if(xmtPongDone)
+			break;
+		case processPong:
 			psprocessout = Buffer_out_pong;
-		rcvPingDone=0;
-		rcvPongDone=0;
-		rcvPungDone=0;
-		xmtPingDone=0;
-		xmtPongDone=0;
+		}
+		eprocessin = processNone;
+		eprocessout = processNone;
 		// processing in SWI
 		SWI_post(&SWI_process_ping);
 	}
