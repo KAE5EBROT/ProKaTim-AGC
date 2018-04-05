@@ -16,8 +16,10 @@
 #include "config_AIC23.h"
 #include "skeleton.h"
 #include "Debug/ProKaTimSS2018cfg.h"
+#include "math.h"
 
-#define BUFFER_LEN 4800
+#define BUFFER_LEN 480
+
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
 #pragma DATA_SECTION(Buffer_in_ping, ".datenpuffer");
@@ -34,7 +36,7 @@ short Buffer_out_pong[BUFFER_LEN];
 short* psprocessin1;
 short* psprocessin2;
 short* psprocessout;
-float desired_power;
+double desired_power=10000;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -357,17 +359,26 @@ void EDMA_interrupt_service(void)
 void process_ping_SWI(void)					//Golden wire
 {
 	int i;
-	static float power=0,gain=0,gain_old=0;
-
-	gain_old=gain;
+	static float gain_old=0;
+	double power=0,gain=0;
 
 	for(i=0; i<BUFFER_LEN; i++){
-		power+=(psprocessin1[i])^2;
+		power+=psprocessin1[i]*psprocessin1[i];
 	}
 	power=sqrt(power);
 
-	for(i=0; i<BUFFER_LEN; i++)
-		*(psprocessout+i) = *(psprocessin1+i);
+	gain=desired_power/power;
+	float gaindiff=gain_old-gain;
+	int j=0;
+	for(i=BUFFER_LEN/2; i<BUFFER_LEN; i++,j++){
+		*(psprocessout+j)=*(psprocessin2+i)*(gain+(gaindiff*j/BUFFER_LEN));
+	};
+
+	for(i=0; i<BUFFER_LEN/2; i++,j++){
+		*(psprocessout+j)=*(psprocessin1+i)*(gain+(gaindiff*j/BUFFER_LEN));
+	};
+
+	gain_old=gain;
 
 }
 
