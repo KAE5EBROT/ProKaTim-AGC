@@ -18,7 +18,7 @@
 #include "Debug/ProKaTimSS2018cfg.h"
 #include "math.h"
 
-#define BUFFER_LEN 480
+#define BUFFER_LEN 4800
 
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
@@ -37,6 +37,7 @@ short* psprocessin1;
 short* psprocessin2;
 short* psprocessout;
 double desired_power=10000;
+int usedbuffer=480;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -233,7 +234,7 @@ void config_EDMA(void)
 	/* link transfers ping -> pong -> ping */
 	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  			/* is that all? EDMA_linking */
 	EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
-	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPung); 	//to include pung change ping
+	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPung);
 	EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
 
 	/* do you want to hear music? When yes you need a EDMA writing */
@@ -269,17 +270,17 @@ void config_EDMA(void)
 	EDMA_intClear(tccRcvPing);
 	EDMA_intEnable(tccRcvPing);
 	/* some more? p added*/
-	EDMA_intClear(tccXmtPing);
-	EDMA_intEnable(tccXmtPing);
+//	EDMA_intClear(tccXmtPing);
+//	EDMA_intEnable(tccXmtPing);
 	/* p added*/
 	EDMA_intClear(tccRcvPong);
 	EDMA_intEnable(tccRcvPong);
-	/* p added*/
-	EDMA_intClear(tccXmtPong);
-	EDMA_intEnable(tccXmtPong);
-	/* p added*/
-//	EDMA_intClear(tccRcvPung);
-//	EDMA_intEnable(tccRcvPung);
+//	/* p added*/
+//	EDMA_intClear(tccXmtPong);
+//	EDMA_intEnable(tccXmtPong);
+
+	EDMA_intClear(tccRcvPung);
+    EDMA_intEnable(tccRcvPung);
 
 	/* which EDMAs do we have to enable? */
 	EDMA_enableChannel(hEdmaRcv);
@@ -360,12 +361,25 @@ void process_ping_SWI(void)					//Golden wire
 {
 	int i;
 	static float gain_old=0;
+	static int ledon=0;
 	double power=0,gain=0;
+
 
 	for(i=0; i<BUFFER_LEN; i++){
 		power+=psprocessin1[i]*psprocessin1[i];
 	}
 	power=sqrt(power);
+	if(power<(desired_power/10)){
+		power=desired_power;
+		if(ledon!=0){
+		SEM_postBinary(&SEM_speechoff);
+		ledon==0;
+		}
+	}
+	else if(ledon==0){
+		SEM_postBinary(&SEM_speechon);
+		ledon=!0;
+	}
 
 	gain=desired_power/power;
 	float gaindiff=gain_old-gain;
@@ -397,5 +411,23 @@ void tsk_led_toggle(void)
 		SEM_pendBinary(&SEM_LEDToggle, SYS_FOREVER);
 
 		DSK6713_LED_toggle(1);				//LED 1
+	}
+}
+
+void tsk_ledon_speechpause(void)
+{
+	while(1) {
+		SEM_pendBinary(&SEM_speechon, SYS_FOREVER);
+
+		DSK6713_LED_on(3);				//LED 3 an
+	}
+}
+
+void tsk_ledoff_speechpause(void)
+{
+	while(1) {
+		SEM_pendBinary(&SEM_speechoff, SYS_FOREVER);
+
+		DSK6713_LED_off(3);				//LED 3 aus
 	}
 }

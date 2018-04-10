@@ -39,6 +39,13 @@ bios.PRD.create("PRD_SWI_LEDToggle");
 bios.PRD.instance("PRD_SWI_LEDToggle").order = 1;
 bios.PRD.instance("PRD_SWI_LEDToggle").fxn = prog.extern("SWI_LEDToggle");
 bios.PRD.instance("PRD_SWI_LEDToggle").period = 250;
+bios.SEM.create("SEM_speechon");
+bios.SEM.create("SEM_speechoff");
+bios.TSK.create("TSK_ledoff");
+bios.TSK.instance("TSK_ledoff").order = 4;
+bios.TSK.instance("TSK_ledoff").order = 3;
+bios.TSK.create("TSK_ledon");
+bios.TSK.instance("TSK_ledon").order = 5;
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();
