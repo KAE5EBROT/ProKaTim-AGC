@@ -106,7 +106,7 @@ MCBSP_Config datainterface_config = {
 /* template for a EDMA configuration */
 EDMA_Config configEDMARcv = {
     EDMA_FMKS(OPT, PRI, LOW)           |  // auf beide Queues verteilen
-    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size (linker und rechter Channel wird nacheinander übertragen)
+    EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size (linker und rechter Channel wird nacheinander ï¿½bertragen)
     EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
     EDMA_FMKS(OPT, SUM, NONE)          |  // Quell-update mode -> FEST (McBSP)!!!
     EDMA_FMKS(OPT, 2DD, NO)            |  // kein 2D-Transfer
@@ -132,7 +132,7 @@ EDMA_Config configEDMARcv = {
 
 EDMA_Config configEDMAXmt = {
 	EDMA_FMKS(OPT, PRI, LOW)          |   // auf beide Queues verteilen
-	EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size   //32 bit geändert, da immer nur nach 32 Bit XINT Interrupt kommt
+	EDMA_FMKS(OPT, ESIZE, 16BIT)       |  // Element size   //32 bit geï¿½ndert, da immer nur nach 32 Bit XINT Interrupt kommt
 	EDMA_FMKS(OPT, 2DS, NO)            |  // kein 2D-Transfer
 	EDMA_FMKS(OPT, SUM, INC)           |  // Quell
 	EDMA_FMKS(OPT, 2DD, NO)            |  // 2kein 2D-Transfer
