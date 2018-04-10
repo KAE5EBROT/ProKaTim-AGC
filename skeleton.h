@@ -7,6 +7,8 @@ extern void config_EDMA(void);
 extern void config_interrupts(void);
 extern void SWI_LEDToggle(void);
 extern void tsk_led_toggle(void);
+extern void tsk_ledon_speechpause(void);
+extern void tsk_ledoff_speechpause(void);
 
 typedef enum{    // enumeration for simple communication
 	processNone, //=0 dont process anything

@@ -373,7 +373,7 @@ void process_ping_SWI(void)					//Golden wire
 		power=desired_power;
 		if(ledon!=0){
 		SEM_postBinary(&SEM_speechoff);
-		ledon==0;
+		ledon=0;
 		}
 	}
 	else if(ledon==0){

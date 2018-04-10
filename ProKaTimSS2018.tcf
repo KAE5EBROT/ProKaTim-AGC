@@ -46,6 +46,8 @@ bios.TSK.instance("TSK_ledoff").order = 4;
 bios.TSK.instance("TSK_ledoff").order = 3;
 bios.TSK.create("TSK_ledon");
 bios.TSK.instance("TSK_ledon").order = 5;
+bios.TSK.instance("TSK_ledoff").fxn = prog.extern("tsk_ledoff_speechpause");
+bios.TSK.instance("TSK_ledon").fxn = prog.extern("tsk_ledon_speechpause");
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();
