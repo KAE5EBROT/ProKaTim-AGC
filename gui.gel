@@ -1,0 +1,9 @@
+/*--------------------------------------------------------------*/
+/* gui.gel                                                  	*/
+/*                                                              */
+
+menuitem "Time control"; 
+slider Time_ms(1, 100, 1, 1, time_value_ms) 
+{ 
+  usedbuffer_gel = time_value_ms*96; 		/* 1ms = 48 --> left and right channel 2*48=96   
+}
