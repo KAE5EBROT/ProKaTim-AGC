@@ -18,7 +18,7 @@
 #include "Debug/ProKaTimSS2018cfg.h"
 #include "math.h"
 
-#define BUFFER_LEN 4800
+#define BUFFER_LEN 9600
 
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
@@ -37,7 +37,8 @@ short* psprocessin1;
 short* psprocessin2;
 short* psprocessout;
 double desired_power=10000;
-int usedbuffer=480;
+int usedbuffer=960;
+volatile int usedbuffer_gel=960;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -207,6 +208,7 @@ void config_EDMA(void)
 	hEdmaReloadRcvPung = EDMA_allocTable(-1);               	// Reload-Parameters
 
 	configEDMARcv.src = MCBSP_getRcvAddr(hMcbsp);         		// source addr , constant
+	configEDMARcv.cnt =	EDMA_FMKS(CNT, FRMCNT, OF(0)) | EDMA_FMK (CNT, ELECNT, usedbuffer);
 
 	tccRcvPing = EDMA_intAlloc(-1);                        		// next available TCC Transfer Complete Code
 	tccRcvPong = EDMA_intAlloc(-1);								// indicate which channel (parameter set) is ready
@@ -245,6 +247,7 @@ void config_EDMA(void)
 	hEdmaReloadXmtPong = EDMA_allocTable(-1);              		// Reload-Parameters
 
 	configEDMAXmt.dst = MCBSP_getXmtAddr(hMcbsp);          		//  destination addr wird zugewiesen
+	configEDMAXmt.cnt =	EDMA_FMKS(CNT, FRMCNT, OF(0)) | EDMA_FMK (CNT, ELECNT, usedbuffer);
 
 	tccXmtPing = EDMA_intAlloc(-1);
 	tccXmtPong = EDMA_intAlloc(-1);
@@ -364,8 +367,10 @@ void process_ping_SWI(void)					//Golden wire
 	static int ledon=0;
 	double power=0,gain=0;
 
-
-	for(i=0; i<BUFFER_LEN; i++){
+	if(usedbuffer_gel != usedbuffer){
+		SEM_postBinary(&SEM_updateEDMA);
+	}
+	for(i=0; i<usedbuffer; i++){
 		power+=psprocessin1[i]*psprocessin1[i];
 	}
 	power=sqrt(power);
@@ -383,13 +388,13 @@ void process_ping_SWI(void)					//Golden wire
 
 	gain=desired_power/power;
 	float gaindiff=gain_old-gain;
-	int j=0;
-	for(i=BUFFER_LEN/2; i<BUFFER_LEN; i++,j++){
-		*(psprocessout+j)=*(psprocessin2+i)*(gain+(gaindiff*j/BUFFER_LEN));
+	int j=0; /* is used for indexing processout */
+	for(i=usedbuffer/2; i<usedbuffer; i++,j++){ /* 1st half */
+		*(psprocessout+j)=*(psprocessin2+i)*(gain+(gaindiff*j/usedbuffer));
 	};
 
-	for(i=0; i<BUFFER_LEN/2; i++,j++){
-		*(psprocessout+j)=*(psprocessin1+i)*(gain+(gaindiff*j/BUFFER_LEN));
+	for(i=0; i<usedbuffer/2; i++,j++){ /*2n half */
+		*(psprocessout+j)=*(psprocessin1+i)*(gain+(gaindiff*j/usedbuffer));
 	};
 
 	gain_old=gain;
@@ -429,5 +434,22 @@ void tsk_ledoff_speechpause(void)
 		SEM_pendBinary(&SEM_speechoff, SYS_FOREVER);
 
 		DSK6713_LED_off(3);				//LED 3 aus
+	}
+}
+
+void tsk_updateEDMA_f(void)
+{
+	while(1) {
+		SEM_pendBinary(&SEM_updateEDMA, SYS_FOREVER);
+
+		EDMA_close(hEdmaRcv);
+		EDMA_close(hEdmaXmt);
+		EDMA_freeTable(hEdmaReloadRcvPing);
+		EDMA_freeTable(hEdmaReloadRcvPong);
+		EDMA_freeTable(hEdmaReloadRcvPung);
+		EDMA_freeTable(hEdmaReloadXmtPing);
+		EDMA_freeTable(hEdmaReloadXmtPong);
+		usedbuffer = usedbuffer_gel;
+		config_EDMA();
 	}
 }

@@ -22,9 +22,9 @@ bios.SWI.instance("PRD_swi").order = 1;
 bios.SWI.instance("KNL_swi").order = 2;
 bios.TSK.instance("TSK_idle").order = 1;
 bios.MEM.instance("SDRAM").enableHeapLabel = 0;
-bios.MEM.instance("IRAM").len = 0x00034000;
-bios.MEM.instance("MyBuffers").len = 0x0000C000;
-bios.MEM.instance("MyBuffers").base = 0x00034000;
+bios.MEM.instance("IRAM").len = 0x00028900;
+bios.MEM.instance("MyBuffers").len = 0x00017700;
+bios.MEM.instance("MyBuffers").base = 0x00028900;
 bios.MEM.instance("MyBuffers").createHeap = 0;
 bios.SWI.create("SWI_process_ping");
 bios.SWI.instance("SWI_process_ping").order = 4;
@@ -48,6 +48,10 @@ bios.TSK.create("TSK_ledon");
 bios.TSK.instance("TSK_ledon").order = 5;
 bios.TSK.instance("TSK_ledoff").fxn = prog.extern("tsk_ledoff_speechpause");
 bios.TSK.instance("TSK_ledon").fxn = prog.extern("tsk_ledon_speechpause");
+bios.SEM.create("SEM_updateEDMA");
+bios.TSK.create("TSK_updateEDMA");
+bios.TSK.instance("TSK_updateEDMA").order = 6;
+bios.TSK.instance("TSK_updateEDMA").fxn = prog.extern("tsk_updateEDMA_f");
 // !GRAPHICAL_CONFIG_TOOL_SCRIPT_INSERT_POINT!
 
 prog.gen();
