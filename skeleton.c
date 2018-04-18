@@ -36,7 +36,8 @@ short Buffer_out_pong[BUFFER_LEN];
 short* psprocessin1;
 short* psprocessin2;
 short* psprocessout;
-double desired_power=10000;
+double desired_power=2000;
+double minimal_power=200;
 int usedbuffer=960;
 volatile int usedbuffer_gel=960;
 
@@ -273,14 +274,14 @@ void config_EDMA(void)
 	EDMA_intClear(tccRcvPing);
 	EDMA_intEnable(tccRcvPing);
 	/* some more? p added*/
-//	EDMA_intClear(tccXmtPing);
-//	EDMA_intEnable(tccXmtPing);
+	EDMA_intClear(tccXmtPing);
+	EDMA_intEnable(tccXmtPing);
 	/* p added*/
 	EDMA_intClear(tccRcvPong);
 	EDMA_intEnable(tccRcvPong);
 //	/* p added*/
-//	EDMA_intClear(tccXmtPong);
-//	EDMA_intEnable(tccXmtPong);
+	EDMA_intClear(tccXmtPong);
+	EDMA_intEnable(tccXmtPong);
 
 	EDMA_intClear(tccRcvPung);
     EDMA_intEnable(tccRcvPung);
@@ -303,6 +304,7 @@ void EDMA_interrupt_service(void)
 {
 	static enum_process eprocessin = processNone;
 	static enum_process eprocessout = processNone;
+	static short failcounter = 0;
 
 	if(EDMA_intTest(tccRcvPing)) {
 		EDMA_intClear(tccRcvPing); /* clear is mandatory p loescht gesetztes Bit (tccRcvPing)*/
@@ -329,6 +331,7 @@ void EDMA_interrupt_service(void)
 	}
 
 	if(eprocessin && eprocessout) {
+		failcounter = 0; /* reset counter, operation works */
 		switch(eprocessin){
 		case processNone:
 			break;
@@ -358,6 +361,13 @@ void EDMA_interrupt_service(void)
 		// processing in SWI
 		SWI_post(&SWI_process_ping);
 	}
+	else{ /* if only one channel finishes multiple times, rewrite EDMA */
+		failcounter++;
+	}
+	if((usedbuffer_gel != usedbuffer) || (failcounter > 10)){
+		failcounter = 0;
+		SEM_postBinary(&SEM_updateEDMA);
+	}
 }
 
 void process_ping_SWI(void)					//Golden wire
@@ -367,14 +377,11 @@ void process_ping_SWI(void)					//Golden wire
 	static int ledon=0;
 	double power=0,gain=0;
 
-	if(usedbuffer_gel != usedbuffer){
-		SEM_postBinary(&SEM_updateEDMA);
-	}
 	for(i=0; i<usedbuffer; i++){
 		power+=psprocessin1[i]*psprocessin1[i];
 	}
-	power=sqrt(power);
-	if(power<(desired_power/10)){
+	power=sqrt(power/(double)usedbuffer);
+	if(power<minimal_power){
 		power=desired_power;
 		if(ledon!=0){
 		SEM_postBinary(&SEM_speechoff);
@@ -390,15 +397,15 @@ void process_ping_SWI(void)					//Golden wire
 	float gaindiff=gain_old-gain;
 	int j=0; /* is used for indexing processout */
 	for(i=usedbuffer/2; i<usedbuffer; i++,j++){ /* 1st half */
-		*(psprocessout+j)=*(psprocessin2+i)*(gain+(gaindiff*j/usedbuffer));
+		psprocessout[j]=psprocessin2[i]*(gain+((gaindiff*j)/usedbuffer));
 	};
 
 	for(i=0; i<usedbuffer/2; i++,j++){ /*2n half */
-		*(psprocessout+j)=*(psprocessin1+i)*(gain+(gaindiff*j/usedbuffer));
+		psprocessout[j]=psprocessin1[i]*(gain+((gaindiff*j)/usedbuffer));
 	};
 
 	gain_old=gain;
-
+	DSK6713_LED_toggle(1);
 }
 
 void SWI_LEDToggle(void)
@@ -415,7 +422,7 @@ void tsk_led_toggle(void)
 	while(1) {
 		SEM_pendBinary(&SEM_LEDToggle, SYS_FOREVER);
 
-		DSK6713_LED_toggle(1);				//LED 1
+//		DSK6713_LED_toggle(1);				//LED 1
 	}
 }
 
@@ -441,15 +448,77 @@ void tsk_updateEDMA_f(void)
 {
 	while(1) {
 		SEM_pendBinary(&SEM_updateEDMA, SYS_FOREVER);
-
-		EDMA_close(hEdmaRcv);
-		EDMA_close(hEdmaXmt);
-		EDMA_freeTable(hEdmaReloadRcvPing);
-		EDMA_freeTable(hEdmaReloadRcvPong);
-		EDMA_freeTable(hEdmaReloadRcvPung);
-		EDMA_freeTable(hEdmaReloadXmtPing);
-		EDMA_freeTable(hEdmaReloadXmtPong);
 		usedbuffer = usedbuffer_gel;
-		config_EDMA();
+		EDMA_disableChannel(hEdmaRcv);
+		EDMA_disableChannel(hEdmaXmt);
+		configEDMARcv.cnt =	EDMA_FMKS(CNT, FRMCNT, OF(0)) | EDMA_FMK (CNT, ELECNT, usedbuffer);
+
+		/* configure rcvchannel*/
+		configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+		configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPing);			// set TCC
+		configEDMARcv.dst = (Uint32)(Buffer_in_ping);				// set destination address
+		EDMA_config(hEdmaRcv, &configEDMARcv);						// write config to channel
+		EDMA_config(hEdmaReloadRcvPing, &configEDMARcv);			/*configure reloadrcvping*/
+
+		/* configure reloadrcvpong*/
+		configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+		configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPong);			// set TCC
+		configEDMARcv.dst = (Uint32)(Buffer_in_pong);				// set destination address
+		EDMA_config(hEdmaReloadRcvPong, &configEDMARcv);			// write config to reload
+
+		/* configure reloadrcvpung*/
+		configEDMARcv.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+		configEDMARcv.opt |= EDMA_FMK(OPT,TCC,tccRcvPung);			// set TCC
+		configEDMARcv.dst = (Uint32)(Buffer_in_pung);				// set destination address
+		EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);			// write config to reload
+
+		/* link transfers ping -> pong -> pung */
+		EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  			/* is that all? EDMA_linking */
+		EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
+		EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPung);
+		EDMA_link(hEdmaReloadRcvPung,hEdmaReloadRcvPing);
+
+		configEDMAXmt.dst = MCBSP_getXmtAddr(hMcbsp);          		//  destination addr wird zugewiesen
+		configEDMAXmt.cnt =	EDMA_FMKS(CNT, FRMCNT, OF(0)) | EDMA_FMK (CNT, ELECNT, usedbuffer);
+
+		tccXmtPing = EDMA_intAlloc(-1);
+		tccXmtPong = EDMA_intAlloc(-1);
+
+		/* configure xmtchannel*/
+		configEDMAXmt.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+		configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);			// set TCC
+		configEDMAXmt.src = (Uint32)(Buffer_out_ping);				// set destination address
+		EDMA_config(hEdmaXmt, &configEDMAXmt);						// write config to channel
+		EDMA_config(hEdmaReloadXmtPing, &configEDMAXmt);			/*configure reloadrcvping*/
+
+		/* configure reloadxmtpong*/
+		configEDMAXmt.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
+		configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPong);			// set TCC
+		configEDMAXmt.src = (Uint32)(Buffer_out_pong);				// set destination address
+		EDMA_config(hEdmaReloadXmtPong, &configEDMAXmt);			// write config to reload
+
+		EDMA_link(hEdmaXmt,hEdmaReloadXmtPong);
+		EDMA_link(hEdmaReloadXmtPing,hEdmaReloadXmtPong);
+		EDMA_link(hEdmaReloadXmtPong,hEdmaReloadXmtPing);
+		EDMA_intClear(tccRcvPing);
+		EDMA_intEnable(tccRcvPing);
+		EDMA_intClear(tccXmtPing);
+		EDMA_intEnable(tccXmtPing);
+		EDMA_intClear(tccRcvPong);
+		EDMA_intEnable(tccRcvPong);
+		EDMA_intClear(tccXmtPong);
+		EDMA_intEnable(tccXmtPong);
+		EDMA_intClear(tccRcvPung);
+	    EDMA_intEnable(tccRcvPung);
+		EDMA_enableChannel(hEdmaRcv);
+		EDMA_enableChannel(hEdmaXmt);
+//		EDMA_close(hEdmaRcv);
+//		EDMA_close(hEdmaXmt);
+//		EDMA_freeTable(hEdmaReloadRcvPing);
+//		EDMA_freeTable(hEdmaReloadRcvPong);
+//		EDMA_freeTable(hEdmaReloadRcvPung);
+//		EDMA_freeTable(hEdmaReloadXmtPing);
+//		EDMA_freeTable(hEdmaReloadXmtPong);
+//		config_EDMA();
 	}
 }

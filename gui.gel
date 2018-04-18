@@ -2,8 +2,27 @@
 /* gui.gel                                                  	*/
 /*                                                              */
 
-menuitem "Time control"; 
-slider Time_ms(1, 100, 1, 1, time_value_ms) 
+menuitem "Control"; 
+slider Time_ms(1, 100, 1, 10, time_value_ms) 
 { 
-  usedbuffer_gel = time_value_ms*96; 		/* 1ms = 48 --> left and right channel 2*48=96   
+	GEL_Halt();
+	while(!GEL_IsHalted());
+    usedbuffer_gel = time_value_ms*96; 		/* 1ms = 48 --> left and right channel 2*48=96 */
+    GEL_Run();
+}
+
+slider Volume(1, 10, 1, 1, volume_value) 
+{ 
+	GEL_Halt();
+	while(!GEL_IsHalted());
+	desired_power=8*volume_value*volume_value*volume_value; 		/* 1ms = 48 --> left and right channel 2*48=96 */
+    GEL_Run();
+}
+
+slider Threshold(1, 10, 1, 1, thresh_value) 
+{ 
+	GEL_Halt();
+	while(!GEL_IsHalted());
+	minimal_power=8*thresh_value*thresh_value*thresh_value/10; 		/* 1ms = 48 --> left and right channel 2*48=96 */
+    GEL_Run();
 }
