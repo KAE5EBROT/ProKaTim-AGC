@@ -481,9 +481,6 @@ void tsk_updateEDMA_f(void)
 		configEDMAXmt.dst = MCBSP_getXmtAddr(hMcbsp);          		//  destination addr wird zugewiesen
 		configEDMAXmt.cnt =	EDMA_FMKS(CNT, FRMCNT, OF(0)) | EDMA_FMK (CNT, ELECNT, usedbuffer);
 
-		tccXmtPing = EDMA_intAlloc(-1);
-		tccXmtPong = EDMA_intAlloc(-1);
-
 		/* configure xmtchannel*/
 		configEDMAXmt.opt &= 0xFFF0FFFF;							//Reset TCC for new TCC
 		configEDMAXmt.opt |= EDMA_FMK(OPT,TCC,tccXmtPing);			// set TCC
