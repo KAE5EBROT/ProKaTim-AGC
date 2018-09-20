@@ -394,14 +394,14 @@ void process_ping_SWI(void)					//Golden wire
 	}
 
 	gain=desired_power/power;
-	float gaindiff=gain_old-gain;
+	float gaindiff=gain-gain_old;
 	int j=0; /* is used for indexing processout */
 	for(i=usedbuffer/2; i<usedbuffer; i++,j++){ /* 1st half */
-		psprocessout[j]=psprocessin2[i]*(gain+((gaindiff*j)/usedbuffer));
+		psprocessout[j]=psprocessin2[i]*(gain_old+((gaindiff*j)/usedbuffer));
 	};
 
 	for(i=0; i<usedbuffer/2; i++,j++){ /*2n half */
-		psprocessout[j]=psprocessin1[i]*(gain+((gaindiff*j)/usedbuffer));
+		psprocessout[j]=psprocessin1[i]*(gain_old+((gaindiff*j)/usedbuffer));
 	};
 
 	gain_old=gain;
