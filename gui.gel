@@ -26,3 +26,405 @@ slider Threshold(1, 10, 1, 1, thresh_value)
 	minimal_power=8*thresh_value*thresh_value*thresh_value/10; /* 800 max */
     GEL_Run();
 }
+
+slider Volume_dB(0, 96, 3, 3, volume_value) 
+{ 
+	GEL_Halt();
+	while(!GEL_IsHalted());
+	if (volume_value == 0)
+	    desired_power = 1;
+	else if (volume_value == 1)
+	    desired_power = 2;
+	else if (volume_value == 2)
+	    desired_power = 3;
+	else if (volume_value == 3)
+	    desired_power = 4;
+	else if (volume_value == 4)
+	    desired_power = 5;
+	else if (volume_value == 5)
+	    desired_power = 6;
+	else if (volume_value == 6)
+	    desired_power = 7;
+	else if (volume_value == 7)
+	    desired_power = 8;
+	else if (volume_value == 8)
+	    desired_power = 9;
+	else if (volume_value == 9)
+	    desired_power = 10;
+	else if (volume_value == 10)
+	    desired_power = 11;
+	else if (volume_value == 11)
+	    desired_power = 12;
+	else if (volume_value == 12)
+	    desired_power = 13;
+	else if (volume_value == 13)
+	    desired_power = 14;
+	else if (volume_value == 14)
+	    desired_power = 15;
+	else if (volume_value == 15)
+	    desired_power = 16;
+	else if (volume_value == 16)
+	    desired_power = 17;
+	else if (volume_value == 17)
+	    desired_power = 18;
+	else if (volume_value == 18)
+	    desired_power = 19;
+	else if (volume_value == 19)
+	    desired_power = 20;
+	else if (volume_value == 20)
+	    desired_power = 21;
+	else if (volume_value == 21)
+	    desired_power = 22;
+	else if (volume_value == 22)
+	    desired_power = 23;
+	else if (volume_value == 23)
+	    desired_power = 24;
+	else if (volume_value == 24)
+	    desired_power = 25;
+	else if (volume_value == 25)
+	    desired_power = 26;
+	else if (volume_value == 26)
+	    desired_power = 27;
+	else if (volume_value == 27)
+	    desired_power = 28;
+	else if (volume_value == 28)
+	    desired_power = 29;
+	else if (volume_value == 29)
+	    desired_power = 30;
+	else if (volume_value == 30)
+	    desired_power = 31;
+	else if (volume_value == 31)
+	    desired_power = 32;
+	else if (volume_value == 32)
+	    desired_power = 33;
+	else if (volume_value == 33)
+	    desired_power = 34;
+	else if (volume_value == 34)
+	    desired_power = 35;
+	else if (volume_value == 35)
+	    desired_power = 36;
+	else if (volume_value == 36)
+	    desired_power = 37;
+	else if (volume_value == 37)
+	    desired_power = 38;
+	else if (volume_value == 38)
+	    desired_power = 39;
+	else if (volume_value == 39)
+	    desired_power = 40;
+	else if (volume_value == 40)
+	    desired_power = 41;
+	else if (volume_value == 41)
+	    desired_power = 42;
+	else if (volume_value == 42)
+	    desired_power = 45;
+	else if (volume_value == 43)
+	    desired_power = 50;
+	else if (volume_value == 44)
+	    desired_power = 56;
+	else if (volume_value == 45)
+	    desired_power = 63;
+	else if (volume_value == 46)
+	    desired_power = 71;
+	else if (volume_value == 47)
+	    desired_power = 79;
+	else if (volume_value == 48)
+	    desired_power = 89;
+	else if (volume_value == 49)
+	    desired_power = 100;
+	else if (volume_value == 50)
+	    desired_power = 112;
+	else if (volume_value == 51)
+	    desired_power = 126;
+	else if (volume_value == 52)
+	    desired_power = 141;
+	else if (volume_value == 53)
+	    desired_power = 158;
+	else if (volume_value == 54)
+	    desired_power = 178;
+	else if (volume_value == 55)
+	    desired_power = 200;
+	else if (volume_value == 56)
+	    desired_power = 224;
+	else if (volume_value == 57)
+	    desired_power = 251;
+	else if (volume_value == 58)
+	    desired_power = 282;
+	else if (volume_value == 59)
+	    desired_power = 316;
+	else if (volume_value == 60)
+	    desired_power = 355;
+	else if (volume_value == 61)
+	    desired_power = 398;
+	else if (volume_value == 62)
+	    desired_power = 447;
+	else if (volume_value == 63)
+	    desired_power = 501;
+	else if (volume_value == 64)
+	    desired_power = 562;
+	else if (volume_value == 65)
+	    desired_power = 631;
+	else if (volume_value == 66)
+	    desired_power = 708;
+	else if (volume_value == 67)
+	    desired_power = 794;
+	else if (volume_value == 68)
+	    desired_power = 891;
+	else if (volume_value == 69)
+	    desired_power = 1000;
+	else if (volume_value == 70)
+	    desired_power = 1122;
+	else if (volume_value == 71)
+	    desired_power = 1259;
+	else if (volume_value == 72)
+	    desired_power = 1413;
+	else if (volume_value == 73)
+	    desired_power = 1585;
+	else if (volume_value == 74)
+	    desired_power = 1778;
+	else if (volume_value == 75)
+	    desired_power = 1995;
+	else if (volume_value == 76)
+	    desired_power = 2239;
+	else if (volume_value == 77)
+	    desired_power = 2512;
+	else if (volume_value == 78)
+	    desired_power = 2818;
+	else if (volume_value == 79)
+	    desired_power = 3162;
+	else if (volume_value == 80)
+	    desired_power = 3548;
+	else if (volume_value == 81)
+	    desired_power = 3981;
+	else if (volume_value == 82)
+	    desired_power = 4467;
+	else if (volume_value == 83)
+	    desired_power = 5012;
+	else if (volume_value == 84)
+	    desired_power = 5623;
+	else if (volume_value == 85)
+	    desired_power = 6310;
+	else if (volume_value == 86)
+	    desired_power = 7079;
+	else if (volume_value == 87)
+	    desired_power = 7943;
+	else if (volume_value == 88)
+	    desired_power = 8913;
+	else if (volume_value == 89)
+	    desired_power = 10000;
+	else if (volume_value == 90)
+	    desired_power = 11220;
+	else if (volume_value == 91)
+	    desired_power = 12589;
+	else if (volume_value == 92)
+	    desired_power = 14125;
+	else if (volume_value == 93)
+	    desired_power = 15849;
+	else if (volume_value == 94)
+	    desired_power = 17783;
+	else if (volume_value == 95)
+	    desired_power = 19953;
+	else if (volume_value == 96)
+	    desired_power = 22387;
+    GEL_Run();
+}
+
+slider Threshold_dB(0, 96, 3, 3, thresh_value) 
+{ 
+	GEL_Halt();
+	while(!GEL_IsHalted());
+	if (thresh_value == 0)
+	    minimal_power = 1;
+	else if (thresh_value == 1)
+	    minimal_power = 2;
+	else if (thresh_value == 2)
+	    minimal_power = 3;
+	else if (thresh_value == 3)
+	    minimal_power = 4;
+	else if (thresh_value == 4)
+	    minimal_power = 5;
+	else if (thresh_value == 5)
+	    minimal_power = 6;
+	else if (thresh_value == 6)
+	    minimal_power = 7;
+	else if (thresh_value == 7)
+	    minimal_power = 8;
+	else if (thresh_value == 8)
+	    minimal_power = 9;
+	else if (thresh_value == 9)
+	    minimal_power = 10;
+	else if (thresh_value == 10)
+	    minimal_power = 11;
+	else if (thresh_value == 11)
+	    minimal_power = 12;
+	else if (thresh_value == 12)
+	    minimal_power = 13;
+	else if (thresh_value == 13)
+	    minimal_power = 14;
+	else if (thresh_value == 14)
+	    minimal_power = 15;
+	else if (thresh_value == 15)
+	    minimal_power = 16;
+	else if (thresh_value == 16)
+	    minimal_power = 17;
+	else if (thresh_value == 17)
+	    minimal_power = 18;
+	else if (thresh_value == 18)
+	    minimal_power = 19;
+	else if (thresh_value == 19)
+	    minimal_power = 20;
+	else if (thresh_value == 20)
+	    minimal_power = 21;
+	else if (thresh_value == 21)
+	    minimal_power = 22;
+	else if (thresh_value == 22)
+	    minimal_power = 23;
+	else if (thresh_value == 23)
+	    minimal_power = 24;
+	else if (thresh_value == 24)
+	    minimal_power = 25;
+	else if (thresh_value == 25)
+	    minimal_power = 26;
+	else if (thresh_value == 26)
+	    minimal_power = 27;
+	else if (thresh_value == 27)
+	    minimal_power = 28;
+	else if (thresh_value == 28)
+	    minimal_power = 29;
+	else if (thresh_value == 29)
+	    minimal_power = 30;
+	else if (thresh_value == 30)
+	    minimal_power = 31;
+	else if (thresh_value == 31)
+	    minimal_power = 32;
+	else if (thresh_value == 32)
+	    minimal_power = 33;
+	else if (thresh_value == 33)
+	    minimal_power = 34;
+	else if (thresh_value == 34)
+	    minimal_power = 35;
+	else if (thresh_value == 35)
+	    minimal_power = 36;
+	else if (thresh_value == 36)
+	    minimal_power = 37;
+	else if (thresh_value == 37)
+	    minimal_power = 38;
+	else if (thresh_value == 38)
+	    minimal_power = 39;
+	else if (thresh_value == 39)
+	    minimal_power = 40;
+	else if (thresh_value == 40)
+	    minimal_power = 41;
+	else if (thresh_value == 41)
+	    minimal_power = 42;
+	else if (thresh_value == 42)
+	    minimal_power = 45;
+	else if (thresh_value == 43)
+	    minimal_power = 50;
+	else if (thresh_value == 44)
+	    minimal_power = 56;
+	else if (thresh_value == 45)
+	    minimal_power = 63;
+	else if (thresh_value == 46)
+	    minimal_power = 71;
+	else if (thresh_value == 47)
+	    minimal_power = 79;
+	else if (thresh_value == 48)
+	    minimal_power = 89;
+	else if (thresh_value == 49)
+	    minimal_power = 100;
+	else if (thresh_value == 50)
+	    minimal_power = 112;
+	else if (thresh_value == 51)
+	    minimal_power = 126;
+	else if (thresh_value == 52)
+	    minimal_power = 141;
+	else if (thresh_value == 53)
+	    minimal_power = 158;
+	else if (thresh_value == 54)
+	    minimal_power = 178;
+	else if (thresh_value == 55)
+	    minimal_power = 200;
+	else if (thresh_value == 56)
+	    minimal_power = 224;
+	else if (thresh_value == 57)
+	    minimal_power = 251;
+	else if (thresh_value == 58)
+	    minimal_power = 282;
+	else if (thresh_value == 59)
+	    minimal_power = 316;
+	else if (thresh_value == 60)
+	    minimal_power = 355;
+	else if (thresh_value == 61)
+	    minimal_power = 398;
+	else if (thresh_value == 62)
+	    minimal_power = 447;
+	else if (thresh_value == 63)
+	    minimal_power = 501;
+	else if (thresh_value == 64)
+	    minimal_power = 562;
+	else if (thresh_value == 65)
+	    minimal_power = 631;
+	else if (thresh_value == 66)
+	    minimal_power = 708;
+	else if (thresh_value == 67)
+	    minimal_power = 794;
+	else if (thresh_value == 68)
+	    minimal_power = 891;
+	else if (thresh_value == 69)
+	    minimal_power = 1000;
+	else if (thresh_value == 70)
+	    minimal_power = 1122;
+	else if (thresh_value == 71)
+	    minimal_power = 1259;
+	else if (thresh_value == 72)
+	    minimal_power = 1413;
+	else if (thresh_value == 73)
+	    minimal_power = 1585;
+	else if (thresh_value == 74)
+	    minimal_power = 1778;
+	else if (thresh_value == 75)
+	    minimal_power = 1995;
+	else if (thresh_value == 76)
+	    minimal_power = 2239;
+	else if (thresh_value == 77)
+	    minimal_power = 2512;
+	else if (thresh_value == 78)
+	    minimal_power = 2818;
+	else if (thresh_value == 79)
+	    minimal_power = 3162;
+	else if (thresh_value == 80)
+	    minimal_power = 3548;
+	else if (thresh_value == 81)
+	    minimal_power = 3981;
+	else if (thresh_value == 82)
+	    minimal_power = 4467;
+	else if (thresh_value == 83)
+	    minimal_power = 5012;
+	else if (thresh_value == 84)
+	    minimal_power = 5623;
+	else if (thresh_value == 85)
+	    minimal_power = 6310;
+	else if (thresh_value == 86)
+	    minimal_power = 7079;
+	else if (thresh_value == 87)
+	    minimal_power = 7943;
+	else if (thresh_value == 88)
+	    minimal_power = 8913;
+	else if (thresh_value == 89)
+	    minimal_power = 10000;
+	else if (thresh_value == 90)
+	    minimal_power = 11220;
+	else if (thresh_value == 91)
+	    minimal_power = 12589;
+	else if (thresh_value == 92)
+	    minimal_power = 14125;
+	else if (thresh_value == 93)
+	    minimal_power = 15849;
+	else if (thresh_value == 94)
+	    minimal_power = 17783;
+	else if (thresh_value == 95)
+	    minimal_power = 19953;
+	else if (thresh_value == 96)
+	    minimal_power = 22387;
+    GEL_Run();
+}

@@ -18,7 +18,7 @@
 #include "Debug/ProKaTimSS2018cfg.h"
 #include "math.h"
 
-#define BUFFER_LEN 9600
+#define BUFFER_LEN 9600 /* 100ms * 48000Hz *2channels (left & right) = 4800 */
 
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
@@ -40,6 +40,9 @@ double desired_power=2000;
 double minimal_power=200;
 int usedbuffer=960;
 volatile int usedbuffer_gel=960;
+#define GAINHIST 200
+float gain_his[GAINHIST];
+int gain_cnt = 0;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -394,13 +397,16 @@ void process_ping_SWI(void)					//Golden wire
 	}
 
 	gain=desired_power/power;
+	if(++gain_cnt >= GAINHIST)
+		gain_cnt = 0;
+	gain_his[gain_cnt] = gain;
 	float gaindiff=gain-gain_old;
 	int j=0; /* is used for indexing processout */
 	for(i=usedbuffer/2; i<usedbuffer; i++,j++){ /* 1st half */
 		psprocessout[j]=psprocessin2[i]*(gain_old+((gaindiff*j)/usedbuffer));
 	};
 
-	for(i=0; i<usedbuffer/2; i++,j++){ /*2n half */
+	for(i=0; i<usedbuffer/2; i++,j++){ /*2nd half */
 		psprocessout[j]=psprocessin1[i]*(gain_old+((gaindiff*j)/usedbuffer));
 	};
 

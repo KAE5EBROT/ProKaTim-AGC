@@ -4,7 +4,7 @@ clc
 
 %% Setup
 desiredvol = .25;
-T          = 5/1000;
+T          = 10/1000;
 maxgain    = 10;
 % filename   = 'lathe';
 % fileext    = '.wav';
