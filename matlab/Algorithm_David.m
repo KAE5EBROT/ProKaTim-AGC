@@ -4,14 +4,14 @@ clc
 
 %% Setup
 desiredvol = .25;
-T          = 10/1000;
+T          = 1/1000;
 maxgain    = 10;
 % filename   = 'lathe';
 % fileext    = '.wav';
-% filename   = '(50) [DJ Isaac] Burn (Sub Zero Project Remix)';
-% fileext    = '.mp3';
-filename   = 'generated_sine';
-fileext    = '.m4a';
+filename   = '(50) [DJ Isaac] Burn (Sub Zero Project Remix)';
+fileext    = '.mp3';
+% filename   = 'generated_sine';
+% fileext    = '.m4a';
 
 [input,fs] = audioread([filename,fileext]);
 totallen = length(input);
@@ -48,8 +48,11 @@ subplot(2,1,1)
 plot((1:totallen)/fs,input)
 subplot(2,1,2)
 plot((1:(totallen-blocksize))/fs,output,(1:(totallen-blocksize))/fs,gain)
+figure;
+plot((1:(totallen-blocksize))/fs,input((blocksize/2+1):(length(gain)+blocksize/2),1)+...
+    input((blocksize/2+1):(length(gain)+blocksize/2),1),(1:(totallen-blocksize))/fs,output(:,1)+output(:,2),(1:(totallen-blocksize))/fs,gain)
 dispstat('Writing audio...','keepprev','timestamp');
-output = output/max(abs(output));
+output = output/max(max(abs(output))); % max(max(x)) gives max of 2d mat
 audiowrite([filename,'_david','.m4a'],output,fs);
 dispstat('Finished.','keepprev','timestamp');
 
