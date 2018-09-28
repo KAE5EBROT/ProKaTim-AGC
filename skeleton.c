@@ -385,7 +385,7 @@ void process_ping_SWI(void)					//Golden wire
 		power+=psprocessin1[i]*psprocessin1[i];
 	}
 	power=sqrt(power/(double)usedbuffer);
-	if((improvement)&&(power<minimal_power)){
+	if((power<minimal_power)){
 		power=desired_power;
 		if(ledon!=0){
 		SEM_postBinary(&SEM_speechoff);
@@ -400,7 +400,7 @@ void process_ping_SWI(void)					//Golden wire
 	gain=desired_power/power;
 
 	float gaindiff=gain-gain_old;
-	if(gaindiff>0.01*usedbuffer/96){
+	if((improvement)&&(gaindiff>0.01*usedbuffer/96)){
 		gaindiff=0.01*usedbuffer/96;
 		gain=gain_old + gaindiff;
 	}
