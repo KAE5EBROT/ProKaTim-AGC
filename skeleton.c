@@ -43,6 +43,7 @@ volatile int usedbuffer_gel=960;
 #define GAINHIST 200
 float gain_his[GAINHIST];
 int gain_cnt = 0;
+int improvement = 0;
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -384,7 +385,7 @@ void process_ping_SWI(void)					//Golden wire
 		power+=psprocessin1[i]*psprocessin1[i];
 	}
 	power=sqrt(power/(double)usedbuffer);
-	if(power<minimal_power){
+	if((improvement)&&(power<minimal_power)){
 		power=desired_power;
 		if(ledon!=0){
 		SEM_postBinary(&SEM_speechoff);

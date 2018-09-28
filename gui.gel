@@ -428,3 +428,11 @@ slider Threshold_dB(0, 96, 3, 3, thresh_value)
 	    minimal_power = 22387;
     GEL_Run();
 }
+
+slider Improvement(0, 1, 1, 1, value) 
+{ 
+	GEL_Halt();
+	while(!GEL_IsHalted());
+	improvement=value; /* 8000 max */
+    GEL_Run();
+}
