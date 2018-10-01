@@ -18,7 +18,7 @@
 #include "Debug/ProKaTimSS2018cfg.h"
 #include "math.h"
 
-#define BUFFER_LEN 9600 /* 100ms * 48000Hz *2channels (left & right) = 4800 */
+#define BUFFER_LEN 9600 /* 100ms * 48000Hz * 2channels (left & right) = 9600 */
 
 /* Ping-Pong buffers. Place them in the compiler section .datenpuffer */
 /* How do you place the compiler section in the memory? p Seite 45 EDMA    */
@@ -33,17 +33,17 @@ short Buffer_out_ping[BUFFER_LEN];
 #pragma DATA_SECTION(Buffer_out_pong, ".datenpuffer");
 short Buffer_out_pong[BUFFER_LEN];
 
-short* psprocessin1;
-short* psprocessin2;
-short* psprocessout;
-double desired_power=2000;
-double minimal_power=200;
-int usedbuffer=960;
-volatile int usedbuffer_gel=960;
-#define GAINHIST 200
-float gain_his[GAINHIST];
-int gain_cnt = 0;
-int improvement = 0;
+short* psprocessin1;		/* pointers to buffers for the cpu to process */
+short* psprocessin2;		/* ^ */
+short* psprocessout;		/* ^ */
+double desired_power=2000;	/* equivalent to power at output */
+double minimal_power=200;	/* equivalent to power threshold for speech pause */
+int usedbuffer=BUFFER_LEN/10; /* time constant in samples*2 */
+volatile int usedbuffer_gel=BUFFER_LEN/10; /* time constant reload */
+#define GAINHIST 200		/* number of gains to store */
+float gain_his[GAINHIST];	/* visualization of gain */
+int gain_cnt = 0;			/* counter for history ring buffer */
+int improvement = 0;		/* bool for switching via GEL */
 
 //Configuration for McBSP1 (data-interface)
 MCBSP_Config datainterface_config = {
@@ -238,7 +238,7 @@ void config_EDMA(void)
 	configEDMARcv.dst = (Uint32)(Buffer_in_pung);				// set destination address
 	EDMA_config(hEdmaReloadRcvPung, &configEDMARcv);			// write config to reload
 
-	/* link transfers ping -> pong -> ping */
+	/* link transfers ping -> pong -> pung -> ping */
 	EDMA_link(hEdmaRcv,hEdmaReloadRcvPong);  			/* is that all? EDMA_linking */
 	EDMA_link(hEdmaReloadRcvPing,hEdmaReloadRcvPong);
 	EDMA_link(hEdmaReloadRcvPong,hEdmaReloadRcvPung);
@@ -400,9 +400,9 @@ void process_ping_SWI(void)					//Golden wire
 	gain=desired_power/power;
 
 	float gaindiff=gain-gain_old;
-	if((improvement)&&(gaindiff>0.01*usedbuffer/96)){
-		gaindiff=0.01*usedbuffer/96;
-		gain=gain_old + gaindiff;
+	if((improvement)&&(gaindiff>0.01*usedbuffer/96)){ /* max difference of 10/s */
+		gaindiff=0.01*usedbuffer/96;				/* calculate for bufferlength */
+		gain=gain_old + gaindiff;					/* apply change */
 	}
 	if(++gain_cnt >= GAINHIST)
 		gain_cnt = 0;
@@ -521,13 +521,5 @@ void tsk_updateEDMA_f(void)
 	    EDMA_intEnable(tccRcvPung);
 		EDMA_enableChannel(hEdmaRcv);
 		EDMA_enableChannel(hEdmaXmt);
-//		EDMA_close(hEdmaRcv);
-//		EDMA_close(hEdmaXmt);
-//		EDMA_freeTable(hEdmaReloadRcvPing);
-//		EDMA_freeTable(hEdmaReloadRcvPong);
-//		EDMA_freeTable(hEdmaReloadRcvPung);
-//		EDMA_freeTable(hEdmaReloadXmtPing);
-//		EDMA_freeTable(hEdmaReloadXmtPong);
-//		config_EDMA();
 	}
 }
